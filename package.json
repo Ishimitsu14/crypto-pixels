@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "parseChannel": "node jobs/ParsingChannels.ts",
-    "start": "node build/bin/http.ts NODE_ENV=production",
+    "start": "node build/bin/http.js NODE_ENV=production",
     "watch": "nodemon bin/http.ts",
     "prod": "tsc --project ./"
   },

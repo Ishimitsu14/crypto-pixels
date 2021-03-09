@@ -1,0 +1,25 @@
+{
+   "name": "default",
+   "type": "postgres",
+   "host": "localhost",
+   "port": 5432,
+   "username": "superuser",
+   "password": "superuser",
+   "database": "crypto_punks",
+   "synchronize": true,
+   "logging": false,
+   "entities": [
+      "models/**/*.ts"
+   ],
+   "migrations": [
+      "migration/**/*.ts"
+   ],
+   "subscribers": [
+      "subscriber/**/*.ts"
+   ],
+   "cli": {
+      "entitiesDir": "entity",
+      "migrationsDir": "migration",
+      "subscribersDir": "subscriber"
+   }
+}

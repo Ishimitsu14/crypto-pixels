@@ -47,7 +47,7 @@ router.get('/generate', async (req: Request, res: Response) => {
         stream.on('error', reject);
     });
 
-    res.status(200).sendFile(`${appRoot.path}/punks/${uuid}/punk.gif`);
+    res.status(200).json({ gif: `/gif/${uuid}`, uuid, images, });
 });
 
 module.exports = router;

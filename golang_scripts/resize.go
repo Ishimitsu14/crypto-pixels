@@ -60,7 +60,7 @@ func main()  {
 		}
 		_ = file.Close()
 
-		m := resize.Resize(800, 800, img, resize.NearestNeighbor)
+		m := resize.Resize(400, 400, img, resize.NearestNeighbor)
 		_ = os.MkdirAll(filepath.Dir("../assets/" + folder), 0777)
 		out, err := os.Create("../assets/" + folder)
 		if err != nil {

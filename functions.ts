@@ -26,17 +26,11 @@ export const getAsyncRedis = (client: RedisClient, key: string): Promise<string 
     })
 }
 
-export const asyncLoadCanvasImage = (src: string, width: number, height: number): Promise<Image | undefined> => {
+export const asyncLoadCanvasImage = (src: string): Promise<Image | undefined> => {
     return new Promise((resolve, reject) => {
-        sharp(src)
-            .resize(width, height, { kernel: 'nearest' })
-            .toBuffer()
-            .then((buffer: string | Buffer) => {
-                loadImage(buffer)
-                    .then((image) => resolve(image))
-                    .catch((err) => reject(err))
-            })
-            .catch((err: any) => reject(err))
+        loadImage(src)
+            .then((image) => resolve(image))
+            .catch((err) => reject(err))
     });
 }
 

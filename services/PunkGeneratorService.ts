@@ -60,7 +60,7 @@ class PunkGeneratorService {
             fs.writeFileSync(`${appRoot.path}/punks/${this.uuid}/${counter + 1}.png`, newImage);
             counter += 1;
         }
-        const encoder = new GIFEncoder(800, 800);
+        const encoder = new GIFEncoder(this.currentWidth, this.currentHeight);
         const stream = pngFileStream(`${appRoot.path}/punks/${this.uuid}/*.png`)
             .pipe(encoder.createWriteStream({ repeat: 0, delay: 300, quality: 10 }))
             .pipe(fs.createWriteStream(`${appRoot.path}/punks/${this.uuid}/punk.gif`));

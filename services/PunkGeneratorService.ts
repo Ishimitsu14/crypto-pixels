@@ -26,7 +26,7 @@ class PunkGeneratorService {
             this.canvas = createCanvas(this.currentWidth, this.currentHeight);
             this.ctx = this.canvas.getContext('2d');
             for (const image of images) {
-                const newImage = await asyncLoadCanvasImage(image, this.currentWidth, this.currentHeight);
+                const newImage = await asyncLoadCanvasImage(image);
                 this.ctx.drawImage(newImage, 0, 0);
             }
             return this.canvas.toBuffer('image/png');

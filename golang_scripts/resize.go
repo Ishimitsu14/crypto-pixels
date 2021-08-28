@@ -1,16 +1,17 @@
 package main
 
 import (
-	"io/ioutil"
-	"path/filepath"
 	"github.com/nfnt/resize"
 	"image/png"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func main()  {
-	os.RemoveAll("../assets")
+	_ = os.RemoveAll("../assets")
 
 	files, err := ioutil.ReadDir("../source_titles")
 	if err != nil {
@@ -48,26 +49,28 @@ func main()  {
 			}
 		}
 	}
-
 	for _, folder := range foldersAndFiles {
-		file, err := os.Open("../source_titles/" + folder)
-		if err != nil {
-			log.Fatal(err)
-		}
-		img, err := png.Decode(file)
-		if err != nil {
-			log.Fatal(err)
-		}
-		_ = file.Close()
+		var path = "../source_titles/" + folder
+		if strings.HasSuffix(path, ".png") == true {
+			file, err := os.Open(path)
+			if err != nil {
+				log.Fatal(err)
+			}
+			img, err := png.Decode(file)
+			if err != nil {
+				log.Fatal(err)
+			}
+			_ = file.Close()
 
-		m := resize.Resize(400, 400, img, resize.NearestNeighbor)
-		_ = os.MkdirAll(filepath.Dir("../assets/" + folder), 0777)
-		out, err := os.Create("../assets/" + folder)
-		if err != nil {
-			log.Fatal(err)
+			m := resize.Resize(400, 400, img, resize.NearestNeighbor)
+			_ = os.MkdirAll(filepath.Dir("../assets/" + folder), 0777)
+			out, err := os.Create("../assets/" + folder)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer out.Close()
+			_ = png.Encode(out, m)
 		}
-		defer out.Close()
-		_ = png.Encode(out, m)
 	}
 
 }

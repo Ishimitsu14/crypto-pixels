@@ -1,18 +1,17 @@
 import { createCanvas, Canvas, CanvasRenderingContext2D } from 'canvas';
 import { asyncLoadCanvasImage, randomIntFromInterval } from "../functions";
-import resizeImageData from 'resize-image-data';
-import fs from "fs";
-import appRoot from "app-root-path";
-import { v4 as uuidv4 } from "uuid";
-import GIFEncoder from "gifencoder";
+import fs from 'fs';
+import appRoot from 'app-root-path';
+import { v4 as uuidv4 } from 'uuid';
+import GIFEncoder from 'gifencoder';
 // @ts-ignore
 import pngFileStream from 'png-file-stream';
 
 class PunkGeneratorService {
     private canvas: Canvas
     private ctx: CanvasRenderingContext2D
-    private currentWidth: number
-    private currentHeight: number
+    private readonly currentWidth: number
+    private readonly currentHeight: number
     public link: string;
     public uuid: string;
 

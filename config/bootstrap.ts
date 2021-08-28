@@ -18,6 +18,6 @@ export = async () => {
         // }
         return true;
     } catch (e) {
-        throw Error(e);
+        throw Error('Error after bootstrap');
     }
 }

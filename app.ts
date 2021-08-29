@@ -1,6 +1,9 @@
 import { Application, Express } from 'express';
 import { Server } from 'http';
-const expressip = require('express-ip');
+// @ts-ignore
+import expressIp from 'express-ip';
+import cors from './middleware/cors'
+import fileUpload from 'express-fileupload'
 
 module.exports = (app: Application, express: Express, http: Server): void => {
     const init = () => {
@@ -11,10 +14,15 @@ module.exports = (app: Application, express: Express, http: Server): void => {
     const path = require('path');
     const bodyParser = require('body-parser')
     const cookieParser = require('cookie-parser');
+    app.use(fileUpload({
+        useTempFiles: true,
+        tempFileDir: '/tmp/'
+    }))
+    app.use(cors);
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
     app.use(cookieParser());
-    app.use(expressip().getIpInfoMiddleware);
+    app.use(expressIp().getIpInfoMiddleware);
 
     init();
     // jobs();

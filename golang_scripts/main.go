@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/nfnt/resize"
+	"github.com/gomodule/redigo/redis"
 	"image/png"
 	"io/ioutil"
 	"log"
@@ -11,6 +12,32 @@ import (
 )
 
 func main()  {
+	subscriber, err := redis.Dial("tcp", "localhost:6379")
+	if err != nil {
+		log.Println(err)
+	}
+
+	redisConnect := redis.PubSubConn{Conn: subscriber}
+	err = redisConnect.Subscribe("resize")
+	if err != nil {
+		log.Println(err)
+	}
+	for {
+		switch v := redisConnect.Receive().(type) {
+		case redis.Message:
+			log.Println("resize is start")
+			onResize()
+			log.Println("resize is end")
+		case redis.Subscription:
+			log.Println("subscription triggered")
+		case redis.Error:
+			log.Println(v)
+		}
+	}
+
+}
+
+func onResize()  {
 	_ = os.RemoveAll("../assets")
 
 	files, err := ioutil.ReadDir("../source_titles")
@@ -72,5 +99,4 @@ func main()  {
 			_ = png.Encode(out, m)
 		}
 	}
-
 }

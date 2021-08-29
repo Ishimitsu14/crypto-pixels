@@ -12,6 +12,7 @@ class PunkGeneratorService {
     private ctx: CanvasRenderingContext2D
     private readonly currentWidth: number
     private readonly currentHeight: number
+    public src: string;
     public link: string;
     public uuid: string;
 
@@ -68,8 +69,8 @@ class PunkGeneratorService {
             stream.on('finish', resolve);
             stream.on('error', reject);
         });
-
         this.link = `${appRoot.path}/punks/${this.uuid}/punk.gif`;
+        this.src = `${process.env.BASE_URL}/api/v1/gif/${this.uuid}`
     }
 }
 

@@ -1,4 +1,3 @@
-import { AppConfig } from '../models/AppConfig';
 import { createConnection, getRepository } from "typeorm";
 import constantsConfig from './constantsConfig';
 

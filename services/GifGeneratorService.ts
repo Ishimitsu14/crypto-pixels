@@ -7,7 +7,7 @@ import GIFEncoder from 'gifencoder';
 // @ts-ignore
 import pngFileStream from 'png-file-stream';
 
-class PunkGeneratorService {
+class GifGeneratorService {
     private canvas: Canvas
     private ctx: CanvasRenderingContext2D
     private readonly currentWidth: number
@@ -45,11 +45,10 @@ class PunkGeneratorService {
             const folders = fs.readdirSync(`${appRoot.path}/assets/${bodyPartFolder}`)
             paths.push(`${appRoot.path}/assets/${bodyPartFolder}/${randomIntFromInterval(1, folders.length)}`);
         }
+        console.log(images)
         for (const path of paths) {
             const files = fs.readdirSync(path)
-            for(let i = 1; i <= 4; i++) {
-                images[i - 1].push(`${path}/${files[i - 1]}`);
-            }
+            files.forEach((item, index) => images[index].push(`${path}/${item}`))
         }
         let counter = 0;
         this.uuid = uuidv4();
@@ -74,4 +73,4 @@ class PunkGeneratorService {
     }
 }
 
-export = PunkGeneratorService;
+export = GifGeneratorService;

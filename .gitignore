@@ -6,3 +6,4 @@ assets/*
 .env
 ormconfig.json
 .DS_Store
+golang_scripts/nohup.*

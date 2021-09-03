@@ -9,6 +9,7 @@ module.exports = (app: Application, express: Express, http: Server): void => {
     const init = () => {
         require('./sockets')(io);
         require('./http')(app, express, http)
+        require('./redis')()
     }
     const io = require('socket.io')(http);
     const path = require('path');

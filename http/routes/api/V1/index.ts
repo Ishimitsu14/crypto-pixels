@@ -1,7 +1,7 @@
 module.exports = (path: string, app: any) => {
     const IndexRoutes = require('./IndexRoutes');
-    const GifRoutes = require('./GifRoutes');
+    const ProductRoutes = require('./ProductRoutes');
 
     app.use(`${path}/`, IndexRoutes);
-    app.use(`${path}/gif/`, GifRoutes);
+    app.use(`${path}/product/`, ProductRoutes);
 };

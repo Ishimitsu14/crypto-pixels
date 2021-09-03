@@ -1,7 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, BaseEntity} from 'typeorm';
 
 @Entity()
-export class Product {
+export class Product extends BaseEntity {
 
     @PrimaryGeneratedColumn()
     id: number;
@@ -12,14 +12,14 @@ export class Product {
     @Column()
     path: string
 
-    @Column()
+    @Column('text', {})
     hash: string
 
-    @Column('json', { default: () => null })
+    @Column('json', { nullable: true })
     metaData: string
 
-    @Column()
-    isSelling: boolean
+    @Column('boolean', { default: () => false })
+    isSold: boolean
 
     @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP'})
     createdAt: string;
@@ -28,6 +28,6 @@ export class Product {
     updatedAt: string;
 
     @Column('timestamp', {default: () => null, nullable: true})
-    sellingAt: string;
+    soldAt: string;
 
 }

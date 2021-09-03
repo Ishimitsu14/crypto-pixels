@@ -18,7 +18,7 @@
       "subscriber/**/*.ts"
    ],
    "cli": {
-      "entitiesDir": "entity",
+      "entitiesDir": "models",
       "migrationsDir": "migration",
       "subscribersDir": "subscriber"
    }

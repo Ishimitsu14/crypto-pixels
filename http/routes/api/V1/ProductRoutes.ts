@@ -1,38 +1,40 @@
 import { Request, Response } from 'express';
-import GifGeneratorService from "../../../../services/GifGeneratorService";
-import fs from "fs";
+import ProductGeneratorService from "../../../../services/ProductGeneratorService";
 import appRoot from "app-root-path";
 import redis from "redis";
 import {UploadedFile} from "express-fileupload";
 import AdmZip from "adm-zip";
+import {createConnection} from "typeorm";
+import {Product} from "../../../../models/Product";
 const express = require('express');
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
-    let gifs = [];
-    const uuidArray = fs.readdirSync(`${appRoot}/punks/`);
-    for (const uuid of uuidArray) {
-        if (uuid !== '.gitignore') {
-            gifs.push({
-                uuid,
-                src: `${process.env.BASE_URL}/api/v1/gif/${uuid}`
-            })
-        }
-    }
-    res.status(200).json(gifs);
+    const connection = await createConnection();
+    const products = await Product.find({ where: { isSold: false } })
+    await connection.close()
+    res.status(200).json(products);
 });
 
-router.get('/generate', async (req: Request, res: Response) => {
-    const gifGeneratorService = new GifGeneratorService(400, 400);
-    await gifGeneratorService.generate();
-    res.status(200).json({ gif: gifGeneratorService.src, uuid: gifGeneratorService.uuid, });
+router.get('/generate',(req: Request, res: Response) => {
+    const gifGeneratorService = new ProductGeneratorService(
+        parseInt(<string>req.query.countImages),
+        parseInt(<string>req.query.width),
+        parseInt(<string>req.query.height),
+    );
+    gifGeneratorService.generate();
+    res.status(200).json({ success: { message: 'Images are processed' } });
 });
 
 router.get('/:uuid', async (req: Request, res: Response) => {
-    res.status(200).sendFile(`${appRoot}/punks/${req.params.uuid}/punk.gif`);
+    try {
+        res.status(200).sendFile(`${appRoot}/products/${req.params.uuid}/1.png`)
+    } catch (e) {
+        console.log(e)
+    }
 });
 
-router.post('/upload-tiles/:width/:height', (req: Request, res: Response) => {
+router.post('/upload-tiles', (req: Request, res: Response) => {
     const redisClient = redis.createClient()
     let file: UploadedFile;
     let uploadPath: string | Buffer | undefined;
@@ -51,7 +53,7 @@ router.post('/upload-tiles/:width/:height', (req: Request, res: Response) => {
 
         const zip = new AdmZip(uploadPath)
         zip.extractAllTo(`${appRoot}/source_tiles/`, true)
-        redisClient.publish('resize', `${req.params.width},${req.params.height}`)
+        redisClient.publish('resize', `${req.query.width},${req.query.height}`)
         res.status(200).json({ success: { message: 'File is uploaded and resized' } })
     })
 })

@@ -8,55 +8,39 @@ import (
 	"image/draw"
 	"image/gif"
 	"image/png"
-	"io/ioutil"
 	"log"
-	"math/rand"
+	"main.go/types"
 	"os"
 	"strconv"
-	"time"
 )
 
-func GenerateAssets() {
-	var paths []string
-	var images [][]string
+func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string) {
 	uniqueId := uuid.NewString()
-	folders, err := ioutil.ReadDir("../assets")
+	var outPutImages []string
+	for index, imagePath := range imagePaths.Paths {
+		outPutImages = append(outPutImages, createImageFromImages(
+			width,
+			height,
+			imagePath,
+			"../products/" + uniqueId + "/",
+			strconv.Itoa(index + 1) + ".png",
+		))
+
+	}
+	gifPath, err := createGif(outPutImages, "products", uniqueId, "product.gif")
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, folder := range folders {
-		subFolders, err := ioutil.ReadDir("../assets/" + folder.Name())
-		if err != nil {
-			log.Fatal(err)
-		}
-		paths = append(paths, "../assets/" + folder.Name() + "/" + strconv.Itoa(rangeIn(1, len(subFolders))))
-	}
-	for _, path := range paths {
-		files, err := ioutil.ReadDir(path)
-		if len(images) < len(files) {
-			images = make([][]string, len(files))
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		for index, file := range files {
-			images[index] = append(images[index], path + "/" + file.Name())
-		}
-	}
-	var outPutImages []string
-	for index, imagePaths := range images {
-		outPutImages = append(outPutImages, createImageFromImages(
-			400,
-			400,
-			imagePaths,
-			"../punks/" + uniqueId + "/",
-			strconv.Itoa(index + 1) + ".png",
-		))
-	}
-	createGif(outPutImages, "../punks/" + uniqueId + "/punk.gif")
+	return uniqueId, gifPath, imagePaths.Hash
 }
 
-func createImageFromImages(width int, height int, imagePaths []string, outputPath string, fileName string) string {
+func createImageFromImages(
+	width int,
+	height int,
+	imagePaths []string,
+	outputPath string,
+	fileName string,
+	) string {
 	canvas := gg.NewContext(width, height)
 	for _, imagePath := range imagePaths {
 		f, err := os.Open(imagePath)
@@ -89,7 +73,8 @@ func createImageFromImages(width int, height int, imagePaths []string, outputPat
 	return outputPath + fileName
 }
 
-func createGif(imagePaths []string, outputPath string) {
+func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (string, error) {
+	var outputPath = "../" + outputFolder + "/" + uniqueId + "/" + fileName
 	outGif := &gif.GIF{}
 	for _, imagePath := range imagePaths {
 		f, _ := os.Open(imagePath)
@@ -99,7 +84,7 @@ func createGif(imagePaths []string, outputPath string) {
 			log.Fatal(err)
 		}
 		bounds := pngImage.Bounds()
-		paletteImage := image2.NewPaletted(bounds, palette.WebSafe)
+		paletteImage := image2.NewPaletted(bounds, palette.Plan9)
 		draw.Draw(paletteImage, paletteImage.Rect, pngImage, bounds.Min, draw.Over)
 		outGif.Image = append(outGif.Image, paletteImage)
 		outGif.Delay = append(outGif.Delay, 25)
@@ -113,13 +98,10 @@ func createGif(imagePaths []string, outputPath string) {
 	}(f)
 	err := gif.EncodeAll(f, outGif)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-}
 
-func rangeIn(min, max int) int {
-	rand.Seed(time.Now().UnixNano())
-	return rand.Intn(max - min) + min
+	return "/" + outputFolder + "/" + uniqueId + "/" + fileName, nil
 }
 
 func exists(path string) (bool, error) {

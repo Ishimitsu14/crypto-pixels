@@ -1,30 +1,21 @@
 package subscribers
 
 import (
-	"github.com/gomodule/redigo/redis"
-	"log"
+	"context"
+	"github.com/go-redis/redis/v8"
 	"main.go/utils"
 	"strconv"
 	"strings"
 )
 
-func OnResize(redisConnect redis.PubSubConn) error  {
-	err := redisConnect.Subscribe("resize")
-	if err != nil {
-		return err
-	}
-	for {
-		switch v := redisConnect.Receive().(type) {
-		case redis.Message:
-			var size = strings.Split(string(v.Data), ",")
+func OnResize(ctx context.Context, client *redis.Client)  {
+	subscribe := client.Subscribe(ctx, "resize")
+	go func(ch <-chan *redis.Message) {
+		for v := range ch {
+			var size = strings.Split(string(v.Payload), ",")
 			width, _ := strconv.ParseUint(size[0], 0, 32)
 			height, _ := strconv.ParseUint(size[1], 0, 32)
 			utils.ResizeSources(uint(width), uint(height))
-			log.Println("resize end")
-		case redis.Subscription:
-			log.Println("Subscribed on" + v.Channel)
-		case redis.Error:
-			log.Println(v)
 		}
-	}
+	}(subscribe.Channel())
 }

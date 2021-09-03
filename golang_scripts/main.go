@@ -3,7 +3,8 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"log"
-	"main.go/database/migrations"
+	"main.go/redis"
+	"net/http"
 )
 
 func main()  {
@@ -12,15 +13,10 @@ func main()  {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = migrations.Migrate()
 
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = Subscribes()
-
-	if err != nil {
-		log.Fatal(err)
+	redis.Subscribes()
+	if err := http.ListenAndServe(":1080", nil); err != nil {
+		log.Println(err)
 	}
 	//subscriber, err := redis.Dial("tcp", "localhost:6379")
 	//if err != nil {

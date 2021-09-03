@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"github.com/nfnt/resize"
+	"golang.org/x/text/encoding/charmap"
 	"image/png"
 	"io"
 	"io/ioutil"
@@ -17,7 +18,10 @@ import (
 
 func ResizeSources(unzipInfo types.UnzipInfo)  {
 	_ = os.RemoveAll("../assets")
-	err := unzip(unzipInfo.Zip, "../source_tiles")
+	_ = os.RemoveAll("../source_tiles")
+	_ = os.MkdirAll("../source_tiles", 0777)
+	err := Unzip("../source_tiles_archives/" + unzipInfo.Zip, "../source_tiles")
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,10 +94,8 @@ func ResizeSources(unzipInfo types.UnzipInfo)  {
 	}
 }
 
-func unzip(fileName, dest string) error {
-	_ = os.RemoveAll("../source_tiles")
-	_ = os.MkdirAll("../source_tiles", 0777)
-	r, err := zip.OpenReader("../source_tiles_archives/" + fileName)
+func Unzip(src, dest string) error {
+	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
 	}
@@ -105,12 +107,18 @@ func unzip(fileName, dest string) error {
 
 	err = os.MkdirAll(dest, 0777)
 	if err != nil {
-		return err
+		log.Println(err)
 	}
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
 		rc, err := f.Open()
+		var name = f.Name
+
+		if strings.HasSuffix(f.Name, ".png") {
+			name, _ = charmap.CodePage866.NewDecoder().String(f.Name)
+		}
+
 		if err != nil {
 			return err
 		}
@@ -120,7 +128,9 @@ func unzip(fileName, dest string) error {
 			}
 		}()
 
-		path := filepath.Join(dest, f.Name)
+		path := filepath.Join(dest, name)
+
+
 
 		// Check for ZipSlip (Directory traversal)
 		if !strings.HasPrefix(path, filepath.Clean(dest) + string(os.PathSeparator)) {
@@ -130,12 +140,12 @@ func unzip(fileName, dest string) error {
 		if f.FileInfo().IsDir() {
 			err := os.MkdirAll(path, f.Mode())
 			if err != nil {
-				return err
+				log.Println(err)
 			}
 		} else {
 			err := os.MkdirAll(filepath.Dir(path), f.Mode())
 			if err != nil {
-				return err
+				log.Println(err)
 			}
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {

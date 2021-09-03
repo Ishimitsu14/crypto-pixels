@@ -9,16 +9,13 @@
    "synchronize": true,
    "logging": false,
    "entities": [
-      "models/**/*.ts",
-      "models/**/*.js"
+      "models/**/*.ts"
    ],
    "migrations": [
-      "migration/**/*.ts",
-      "migration/**/*.js"
+      "migration/**/*.ts"
    ],
    "subscribers": [
-      "subscriber/**/*.ts",
-      "subscriber/**/*.js"
+      "subscriber/**/*.ts"
    ],
    "cli": {
       "entitiesDir": "models",

@@ -39,7 +39,7 @@ func OnGenerate(ctx context.Context, client *redis.Client)   {
 func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height int) []types.Product {
 	var products []types.Product
 	var waitGroup sync.WaitGroup
-	goroutines := make(chan struct{}, 4)
+	goroutines := make(chan struct{}, 8)
 	for i := 0; i < count; i++ {
 		i := i
 		goroutines <- struct{}{}

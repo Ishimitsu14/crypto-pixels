@@ -63,7 +63,6 @@ func ResizeSources(width uint, height uint)  {
 			_ = file.Close()
 
 			m := resize.Resize(width, height, img, resize.NearestNeighbor)
-			_ = os.RemoveAll("../assets")
 			_ = os.MkdirAll(filepath.Dir("../assets/" + folder), 0777)
 			out, err := os.Create("../assets/" + folder)
 			if err != nil {

@@ -4,5 +4,5 @@ package-lock.json
 build
 assets/*
 .env
-ormconfig.json
+./ormconfig.json
 .DS_Store

@@ -2,20 +2,23 @@
    "name": "default",
    "type": "mysql",
    "host": "localhost",
-   "port": 5432,
-   "username": "superuser",
-   "password": "superuser",
-   "database": "crypto_punks",
+   "port": 3306,
+   "username": "root",
+   "password": "123789",
+   "database": "crypto_pixels",
    "synchronize": true,
    "logging": false,
    "entities": [
-      "models/**/*.ts"
+      "models/**/*.ts",
+      "models/**/*.js"
    ],
    "migrations": [
-      "migration/**/*.ts"
+      "migration/**/*.ts",
+      "migration/**/*.js"
    ],
    "subscribers": [
-      "subscriber/**/*.ts"
+      "subscriber/**/*.ts",
+      "subscriber/**/*.js"
    ],
    "cli": {
       "entitiesDir": "entity",

@@ -52,10 +52,10 @@ router.post('/upload-tiles', (req: Request, res: Response) => {
         if (err) {
             return res.status(500).json({ error: { message: err.message } })
         }
-
-        const zip = new AdmZip(uploadPath)
-        zip.extractAllTo(`${appRoot}/source_tiles/`, true)
-        redisClient.publish('resize', `${req.query.width},${req.query.height}`)
+        const { width, height } = req.query
+        if (typeof width == 'string' && typeof height == 'string') {
+            redisClient.publish('resize', JSON.stringify({ width, height, zip: file.name }))
+        }
         res.status(200).json({ success: { message: 'File is uploaded and resized' } })
     })
 })

@@ -1,20 +1,27 @@
-import {IGifs} from "../types/TGifs";
+import {IGenerateProduct} from "../types/TGenerateProduct";
 import {Product} from "../models/Product";
-import {createConnection, createQueryBuilder} from "typeorm";
+import {createQueryBuilder} from "typeorm";
+import {connect} from "../functions";
 
 export default async (channel: string, message: string) => {
     if (channel === 'products') {
-        const gifs: IGifs[] = JSON.parse(message)
-       try {
-            const connection = await createConnection();
+        const generateProducts: IGenerateProduct[] = JSON.parse(message)
+        try {
+            await connect();
             await createQueryBuilder()
-               .insert()
-               .into(Product)
-               .values(gifs.map(gif => ({ uuid: gif.Uuid, path: gif.Path, hash: gif.Hash })))
-               .execute()
-           await connection.close()
-       } catch (e) {
-           console.log(e)
-       }
+                .insert()
+                .into(Product)
+                .values(generateProducts.map(product => (
+                   {
+                       uuid: product.Uuid,
+                       image: product.ImagePath,
+                       gif: product.GifPath,
+                       hash: product.Hash,
+                   }
+                   )))
+                .execute()
+        } catch (e) {
+            console.log(e)
+        }
     }
 }

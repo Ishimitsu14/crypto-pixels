@@ -1,5 +1,5 @@
 import { createCanvas, Canvas, CanvasRenderingContext2D } from 'canvas';
-import { asyncLoadCanvasImage, randomIntFromInterval } from "../functions";
+import {asyncLoadCanvasImage, connect, randomIntFromInterval} from "../functions";
 import fs from 'fs';
 import appRoot from 'app-root-path';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,6 +24,7 @@ class ProductGeneratorService {
     }
 
     async generate(): Promise<void> {
+        await connect();
         const iterations = new Array(this.countImages)
         let imagePaths: { paths: string[][]; hash: string }[] = []
         let i = 0
@@ -61,9 +62,7 @@ class ProductGeneratorService {
                 images[index].push(`${path}/${item}`)
             })
         }
-        const connection = await createConnection();
         const [_, count] = await Product.findAndCount({ where: { hash } });
-        await connection.close()
         if (count < 0) {
             return this.getImagePaths()
         }

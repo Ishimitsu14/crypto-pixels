@@ -1,6 +1,5 @@
 import { createConnection, getConnection } from 'typeorm';
 import { RedisClient } from "redis";
-import sharp from 'sharp';
 import { Image, loadImage } from "canvas";
 
 export const timeoutPromise = (timeout: number) => {
@@ -9,9 +8,9 @@ export const timeoutPromise = (timeout: number) => {
 
 export const connect = async () => {
     try {
-        return await getConnection();
-    } catch (error) {
         return await createConnection();
+    } catch (error) {
+        return getConnection('default');
     }
 }
 

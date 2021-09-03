@@ -10,7 +10,10 @@ export class Product extends BaseEntity {
     uuid: string;
 
     @Column()
-    path: string
+    image: string
+
+    @Column()
+    gif: string
 
     @Column('text', {})
     hash: string

@@ -36,17 +36,25 @@ func OnGenerate(ctx context.Context, client *redis.Client)   {
 	}(subscribe.Channel())
 }
 
-func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height int) []types.Gif {
-	var products []types.Gif
+func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height int) []types.Product {
+	var products []types.Product
 	var waitGroup sync.WaitGroup
-	waitGroup.Add(count)
+	goroutines := make(chan struct{}, 4)
 	for i := 0; i < count; i++ {
 		i := i
-		go func() {
-			uuid, path, imageHash := utils.GenerateAssets(imagePaths[i], width, height)
-			products = append(products, types.Gif{ Uuid: uuid, Path: path, Hash: imageHash})
-			defer waitGroup.Done()
-		}()
+		goroutines <- struct{}{}
+		waitGroup.Add(1)
+		go func(goroutines <-chan struct{}) {
+			uuid, imageHash, imagePath, gifPath := utils.GenerateAssets(imagePaths[i], width, height)
+			products = append(products, types.Product{
+				Uuid: uuid,
+				Hash: imageHash,
+				ImagePath: imagePath,
+				GifPath: gifPath,
+			})
+			<-goroutines
+			waitGroup.Done()
+		}(goroutines)
 	}
 	waitGroup.Wait()
 	return products

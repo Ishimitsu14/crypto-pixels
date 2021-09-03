@@ -6,13 +6,13 @@ import {UploadedFile} from "express-fileupload";
 import AdmZip from "adm-zip";
 import {createConnection} from "typeorm";
 import {Product} from "../../../../models/Product";
+import {connect} from "../../../../functions";
 const express = require('express');
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
-    const connection = await createConnection();
+    await connect();
     const products = await Product.find({ where: { isSold: false } })
-    await connection.close()
     res.status(200).json(products);
 });
 
@@ -27,8 +27,10 @@ router.get('/generate',(req: Request, res: Response) => {
 });
 
 router.get('/:uuid', async (req: Request, res: Response) => {
+    await connect();
+    const product = await Product.findOne({ where: { uuid: req.params.uuid } })
     try {
-        res.status(200).sendFile(`${appRoot}/products/${req.params.uuid}/1.png`)
+        res.status(200).sendFile(`${appRoot}${product?.gif ? product?.gif : product?.image}`)
     } catch (e) {
         console.log(e)
     }

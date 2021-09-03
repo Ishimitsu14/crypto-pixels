@@ -5,10 +5,11 @@ type ImagePaths struct {
 	Hash string
 }
 
-type Gif struct {
+type Product struct {
 	Uuid string
-	Path string
 	Hash string
+	ImagePath string
+	GifPath string
 }
 
 type OutputImage struct {

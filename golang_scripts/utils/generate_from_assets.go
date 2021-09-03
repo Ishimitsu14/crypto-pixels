@@ -12,10 +12,12 @@ import (
 	"main.go/types"
 	"os"
 	"strconv"
+	"strings"
 )
 
-func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string) {
+func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string, string) {
 	uniqueId := uuid.NewString()
+	var gifPath string = ""
 	var outPutImages []string
 	for index, imagePath := range imagePaths.Paths {
 		outPutImages = append(outPutImages, createImageFromImages(
@@ -25,13 +27,13 @@ func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, str
 			"../products/" + uniqueId + "/",
 			strconv.Itoa(index + 1) + ".png",
 		))
+	}
 
+	if len(outPutImages) > 1 {
+		gifPath, _ = createGif(outPutImages, "products", uniqueId, "product.gif")
 	}
-	gifPath, err := createGif(outPutImages, "products", uniqueId, "product.gif")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return uniqueId, gifPath, imagePaths.Hash
+
+	return uniqueId, imagePaths.Hash, strings.TrimLeft(outPutImages[0], "."), gifPath
 }
 
 func createImageFromImages(
@@ -50,7 +52,7 @@ func createImageFromImages(
 		defer func(f *os.File) {
 			err := f.Close()
 			if err != nil {
-
+				log.Fatal(err)
 			}
 		}(f)
 		image, _, err := image2.Decode(f)

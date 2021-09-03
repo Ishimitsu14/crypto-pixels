@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"github.com/ericpauley/go-quantize/quantize"
 	"github.com/fogleman/gg"
 	"github.com/google/uuid"
 	image2 "image"
-	"image/color/palette"
+	"image/color"
 	"image/draw"
 	"image/gif"
 	"image/png"
@@ -32,7 +33,7 @@ func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, str
 	if len(outPutImages) > 1 {
 		gifPath, _ = createGif(outPutImages, "products", uniqueId, "product.gif")
 	}
-
+	log.Println("create")
 	return uniqueId, imagePaths.Hash, strings.TrimLeft(outPutImages[0], "."), gifPath
 }
 
@@ -86,7 +87,10 @@ func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (st
 			log.Fatal(err)
 		}
 		bounds := pngImage.Bounds()
-		paletteImage := image2.NewPaletted(bounds, palette.WebSafe)
+		q := quantize.MedianCutQuantizer{}
+		q.AddTransparent = true
+		customPalette := q.Quantize(make([]color.Color, 0, 256), pngImage)
+		paletteImage := image2.NewPaletted(bounds, customPalette)
 		draw.Draw(paletteImage, paletteImage.Rect, pngImage, bounds.Min, draw.Over)
 		outGif.Image = append(outGif.Image, paletteImage)
 		outGif.Delay = append(outGif.Delay, 25)

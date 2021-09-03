@@ -86,7 +86,7 @@ func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (st
 			log.Fatal(err)
 		}
 		bounds := pngImage.Bounds()
-		paletteImage := image2.NewPaletted(bounds, palette.Plan9)
+		paletteImage := image2.NewPaletted(bounds, palette.WebSafe)
 		draw.Draw(paletteImage, paletteImage.Rect, pngImage, bounds.Min, draw.Over)
 		outGif.Image = append(outGif.Image, paletteImage)
 		outGif.Delay = append(outGif.Delay, 25)

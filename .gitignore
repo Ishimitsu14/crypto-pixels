@@ -7,3 +7,4 @@ assets/*
 ormconfig.json
 .DS_Store
 golang_scripts/nohup.*
+source_tiles

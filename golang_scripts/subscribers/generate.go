@@ -45,10 +45,11 @@ func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height 
 		goroutines <- struct{}{}
 		waitGroup.Add(1)
 		go func(goroutines <-chan struct{}) {
-			uuid, imageHash, imagePath, gifPath := utils.GenerateAssets(imagePaths[i], width, height)
+			uuid, imagePath, gifPath := utils.GenerateAssets(imagePaths[i], width, height)
 			products = append(products, types.Product{
 				Uuid: uuid,
-				Hash: imageHash,
+				Hash: imagePaths[i].Hash,
+				Attributes: imagePaths[i].Attributes,
 				ImagePath: imagePath,
 				GifPath: gifPath,
 			})

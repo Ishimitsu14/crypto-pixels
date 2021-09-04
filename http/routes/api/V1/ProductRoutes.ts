@@ -12,18 +12,8 @@ const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
     await connect();
-    const products = await Product.find({ where: { isSold: false } })
+    const products = await Product.find()
     res.status(200).json(products);
-});
-
-router.get('/generate',(req: Request, res: Response) => {
-    const gifGeneratorService = new ProductGeneratorService(
-        parseInt(<string>req.query.countImages),
-        parseInt(<string>req.query.width),
-        parseInt(<string>req.query.height),
-    );
-    gifGeneratorService.generate();
-    res.status(200).json({ success: { message: 'Images are processed' } });
 });
 
 router.get('/:uuid', async (req: Request, res: Response) => {
@@ -34,6 +24,17 @@ router.get('/:uuid', async (req: Request, res: Response) => {
     } catch (e) {
         console.log(e)
     }
+});
+
+router.post('/generate',(req: Request, res: Response) => {
+    const gifGeneratorService = new ProductGeneratorService(
+        req.body.countImages,
+        req.body.width,
+        req.body.height,
+        req.body.isAttributes
+    );
+    gifGeneratorService.generate();
+    res.status(200).json({ success: { message: 'Images are processed' } });
 });
 
 router.post('/upload-tiles', (req: Request, res: Response) => {

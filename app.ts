@@ -5,13 +5,15 @@ import expressIp from 'express-ip';
 import cors from './middleware/cors'
 import fileUpload from 'express-fileupload'
 
-module.exports = (app: Application, express: Express, http: Server): void => {
+
+module.exports = (app: Application, express: Express, http: Server, ws?: Server): void => {
     const init = () => {
-        require('./sockets')(io);
+        if (process.env.SERVER_TYPE === 'dev') {
+            require('./sockets')()
+        }
         require('./http')(app, express, http)
         require('./redis')()
     }
-    const io = require('socket.io')(http);
     const path = require('path');
     const bodyParser = require('body-parser')
     const cookieParser = require('cookie-parser');

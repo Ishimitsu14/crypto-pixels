@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string, string) {
+func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string) {
 	uniqueId := uuid.NewString()
 	var gifPath string = ""
 	var outPutImages []string
@@ -34,7 +34,7 @@ func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, str
 		gifPath, _ = createGif(outPutImages, "products", uniqueId, "product.gif")
 	}
 	log.Println("create")
-	return uniqueId, imagePaths.Hash, strings.TrimLeft(outPutImages[0], "."), gifPath
+	return uniqueId, strings.TrimLeft(outPutImages[0], "."), gifPath
 }
 
 func createImageFromImages(

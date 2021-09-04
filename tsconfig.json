@@ -3,6 +3,7 @@
     "typeRoots": [
       "@types",
       "./node_modules/@types",
+      "./node_modules/socket.io/dist"
     ],
     "lib": [
       "es5",

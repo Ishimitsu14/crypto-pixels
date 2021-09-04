@@ -21,6 +21,9 @@ export class Product extends BaseEntity {
     @Column('json', { nullable: true })
     metaData: string
 
+    @Column('json', { nullable: true })
+    attributes: string
+
     @Column('boolean', { default: () => false })
     isSold: boolean
 

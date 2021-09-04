@@ -3,11 +3,13 @@ package types
 type ImagePaths struct {
 	Paths [][]string
 	Hash string
+	Attributes []ImageAttribute
 }
 
 type Product struct {
 	Uuid string
 	Hash string
+	Attributes []ImageAttribute
 	ImagePath string
 	GifPath string
 }
@@ -15,6 +17,11 @@ type Product struct {
 type OutputImage struct {
 	Paths string
 	Hash string
+}
+
+type ImageAttribute struct {
+	Name string
+	Value string
 }
 
 // [ { hash: string, paths: [ [ {}, {}, {}, {} ], [ {}, {}, {}, {} ]] } ]

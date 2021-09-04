@@ -1,7 +1,7 @@
 export type IGenerateProduct = {
     Uuid: string;
     Hash: string;
-    Attributes?: IImageAttribute[];
+    Attributes?: { Name: string; Value: string }[];
     ImagePath: string;
     GifPath: string;
 }

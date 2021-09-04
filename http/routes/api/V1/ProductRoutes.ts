@@ -28,9 +28,9 @@ router.get('/:uuid', async (req: Request, res: Response) => {
 
 router.post('/generate',(req: Request, res: Response) => {
     const gifGeneratorService = new ProductGeneratorService(
-        req.body.countImages,
-        req.body.width,
-        req.body.height,
+        parseInt(req.body.countImages),
+        parseInt(req.body.width),
+        parseInt(req.body.height),
         req.body.isAttributes
     );
     gifGeneratorService.generate();

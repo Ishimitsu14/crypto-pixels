@@ -21,7 +21,7 @@ export default async (channel: string, message: string) => {
                             image: product.ImagePath,
                             gif: product.GifPath,
                             hash: product.Hash,
-                            attributes: product.Attributes
+                            attributes: JSON.stringify(product.Attributes.map(i => ({ name: i.Name, value: i.Value })))
                         }
                     } else {
                         p = {

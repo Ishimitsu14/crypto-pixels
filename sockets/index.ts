@@ -8,7 +8,8 @@ const cors = {
 }
 
 const getRoute = (http: Server, path: string): SocketServer => {
-    return require('socket.io')(http, {
+    console.log(path)
+    return new SocketServer(http, {
         cors,
         path: `/socket.io${path}`
     })
@@ -37,7 +38,7 @@ const itemsLoop = (route: { route: string; path: string }, http: Server) => {
     items.map((item: string) => {
         const fullPath = `${route.path}/${item}`
         const routeName = route.route ? `${route.route}/${getRouteNameByFile(item)}` : `/`
-        if (fs.lstatSync(fullPath).isFile()) {
+        if (fs.lstatSync(fullPath).isFile() && fullPath.split('.').pop() !== 'map') {
             // Requires all the files in the directory that is not a index.js.
             listeners.push(require(fullPath))
         }

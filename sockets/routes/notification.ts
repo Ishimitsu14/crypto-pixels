@@ -1,4 +1,4 @@
-import {Socket} from "socket.io";
+import {Socket} from "socket.io"
 import NotificationService from '../../services/NotificationService'
 
 module.exports = (io: Socket) => {

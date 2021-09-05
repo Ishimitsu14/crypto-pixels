@@ -10,7 +10,7 @@ import (
 )
 
 func OnResize(ctx context.Context, client *redis.Client)  {
-	subscribe := client.Subscribe(ctx, "resize")
+	subscribe := client.Subscribe(ctx, "resize:start")
 	go func(ch <-chan *redis.Message) {
 		for v := range ch {
 			var unzipInfo types.UnzipInfo
@@ -19,6 +19,7 @@ func OnResize(ctx context.Context, client *redis.Client)  {
 				log.Println(err)
 			}
 			utils.ResizeSources(unzipInfo)
+			client.Publish(ctx, "resize:end", "")
 		}
 	}(subscribe.Channel())
 }

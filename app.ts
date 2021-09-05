@@ -8,11 +8,10 @@ import fileUpload from 'express-fileupload'
 
 module.exports = (app: Application, express: Express, http: Server, ws?: Server): void => {
     const init = () => {
-        if (process.env.SERVER_TYPE === 'dev') {
-            require('./sockets')()
-        }
         require('./http')(app, express, http)
-        require('./redis')()
+        if (process.env.SERVER_TYPE === 'dev') {
+            require('./sockets')(http)
+        }
     }
     const path = require('path');
     const bodyParser = require('body-parser')

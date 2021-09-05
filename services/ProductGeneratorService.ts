@@ -1,19 +1,20 @@
-import { createCanvas, Canvas, CanvasRenderingContext2D } from 'canvas';
-import {asyncLoadCanvasImage, connect, randomIntFromInterval} from "../functions";
+import {connect, randomIntFromInterval} from "../functions";
 import fs from 'fs';
 import appRoot from 'app-root-path';
-import {IImageAttribute, IImagePaths} from "../types/TGenerateProduct";
+import {IGenerateProduct, IImageAttribute, IImagePaths} from "../types/TGenerateProduct";
 // @ts-ignore
 import pngFileStream from 'png-file-stream';
-import redis from "redis";
-import {createConnection} from "typeorm";
+import redis, {RedisClient} from "redis";
+import {createQueryBuilder} from "typeorm";
 import {Product} from "../models/Product";
+import NotificationService from "./NotificationService";
 
 class ProductGeneratorService {
     private readonly countImages: number
     private readonly width: number
     private readonly height: number
     private readonly isAttributes: boolean
+    private readonly channel = 'generate'
 
     constructor(countImages: number, width: number, height: number, isAttributes: boolean = false) {
         this.countImages = countImages;
@@ -23,6 +24,7 @@ class ProductGeneratorService {
     }
 
     async generate(): Promise<void> {
+        const client = redis.createClient()
         await connect();
         const iterations = new Array(this.countImages)
         let imagePaths: IImagePaths[] = []
@@ -31,11 +33,11 @@ class ProductGeneratorService {
             imagePaths[i] = await this.getImagePaths()
             i++
         }
-        const redisClient = redis.createClient()
-        redisClient.set('count_generate_images', this.countImages.toString())
-        redisClient.set('width_generate_images', this.width.toString())
-        redisClient.set('height_generate_images', this.height.toString())
-        redisClient.publish('generate', JSON.stringify(imagePaths))
+        client.set('count_generate_images', this.countImages.toString())
+        client.set('width_generate_images', this.width.toString())
+        client.set('height_generate_images', this.height.toString())
+        client.publish(`${this.channel}:start`, JSON.stringify(imagePaths), () => client.quit())
+        this.onGenerateEnd()
     }
 
     async getImagePaths(): Promise<IImagePaths> {
@@ -73,20 +75,58 @@ class ProductGeneratorService {
         return { hash, paths: images, attributes }
     }
 
-    getAttributeByPath(namePath: string, valuePath: string): IImageAttribute {
-        const nameArr = namePath.split('-')
-        let name = nameArr[0]
-        if (nameArr.length > 1) {
-            name = nameArr[1]
+    getAttributeByPath(traitTypePath: string, valuePath: string): IImageAttribute {
+        const traitTypeArr = traitTypePath.split('-')
+        let traitType = traitTypeArr[0]
+        if (traitTypeArr.length > 1) {
+            traitType = traitTypeArr[1]
         }
         const valueArr = valuePath.split('-')
         let value = valueArr[0]
         if (valueArr.length > 1) {
             value = valueArr[1]
         }
-        return { name, value }
+        return { traitType, value }
     }
 
+    onGenerateEnd() {
+        const subscriber = redis.createClient()
+        subscriber.on('message', async (channel: string, message: string) => {
+            if (channel === `${this.channel}:end`) {
+                const generateProducts: IGenerateProduct[] = JSON.parse(message)
+                try {
+                    await connect();
+                    await createQueryBuilder()
+                        .insert()
+                        .into(Product)
+                        .values(generateProducts.map(product => {
+                            const data = {
+                                uuid: product.Uuid,
+                                image: product.ImagePath,
+                                gif: product.GifPath,
+                                hash: product.Hash
+                            }
+                            if (product.Attributes && product.Attributes.length > 0) {
+                                // @ts-ignore
+                                data.attributes = product.Attributes
+                                    .map(i => ({ trait_type: i.TraitType, value: i.Value }))
+                            }
+                            return data
+                        }))
+                        .execute()
+                    const notificationService = new NotificationService()
+                    await notificationService.publishMessage(
+                        'Images is Generated',
+                        notificationService.types.SUCCESS,
+                    )
+                    subscriber.quit()
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        })
+        subscriber.subscribe('generate:end')
+    }
 }
 
 export = ProductGeneratorService;

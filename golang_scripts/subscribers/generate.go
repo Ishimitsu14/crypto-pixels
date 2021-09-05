@@ -12,7 +12,7 @@ import (
 )
 
 func OnGenerate(ctx context.Context, client *redis.Client)   {
-	subscribe := client.Subscribe(ctx, "generate")
+	subscribe := client.Subscribe(ctx, "generate:start")
 	go func(ch <-chan *redis.Message) {
 		for v := range ch {
 			var imagePaths []types.ImagePaths
@@ -31,7 +31,7 @@ func OnGenerate(ctx context.Context, client *redis.Client)   {
 			if err != nil {
 				log.Println(err)
 			}
-			client.Publish(ctx, "products", jsonProducts)
+			client.Publish(ctx, "generate:end", jsonProducts)
 		}
 	}(subscribe.Channel())
 }

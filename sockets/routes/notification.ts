@@ -1,10 +1,11 @@
 import {Socket} from "socket.io";
-import events from "events";
+import NotificationService from '../../services/NotificationService'
 
 module.exports = (io: Socket) => {
-    const em = new events.EventEmitter()
-    em.on('notification', (message) => {
-        console.log(message)
-        io.emit('notification', { message })
+    const notificationService = new NotificationService()
+    notificationService.subscribe(async () => {
+        const messages = await notificationService.getMessages()
+        io.emit('notification', messages)
+        notificationService.cleanMessages()
     })
 }

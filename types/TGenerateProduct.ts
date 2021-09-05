@@ -1,7 +1,7 @@
 export type IGenerateProduct = {
     Uuid: string;
     Hash: string;
-    Attributes?: { Name: string; Value: string }[];
+    Attributes?: { TraitType: string; Value: string }[];
     ImagePath: string;
     GifPath: string;
 }
@@ -13,6 +13,6 @@ export type IImagePaths = {
 }
 
 export type IImageAttribute = {
-    name: string;
+    traitType: string;
     value: string;
 }

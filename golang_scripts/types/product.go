@@ -20,7 +20,7 @@ type OutputImage struct {
 }
 
 type ImageAttribute struct {
-	Name string
+	TraitType string
 	Value string
 }
 

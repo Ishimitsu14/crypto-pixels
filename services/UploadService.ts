@@ -20,6 +20,8 @@ class UploadService {
                 if (err) {
                     reject(err.message)
                 }
+                client.set('width_images', width.toString())
+                client.set('height_images', height.toString())
                 client.publish(
                     `${this.channel}:start`,
                     JSON.stringify({ width, height, zip: this.file.name }),

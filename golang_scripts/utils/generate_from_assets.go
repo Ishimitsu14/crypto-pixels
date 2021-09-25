@@ -9,32 +9,35 @@ import (
 	"image/draw"
 	"image/gif"
 	"image/png"
-	"log"
+	redisClient "main.go/publisher"
 	"main.go/types"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string) {
+func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string, error) {
 	uniqueId := uuid.NewString()
 	var gifPath string = ""
 	var outPutImages []string
 	for index, imagePath := range imagePaths.Paths {
-		outPutImages = append(outPutImages, createImageFromImages(
+		outPutImage, err := createImageFromImages(
 			width,
 			height,
 			imagePath,
 			"../products/" + uniqueId + "/",
 			strconv.Itoa(index + 1) + ".png",
-		))
+		)
+		if err != nil {
+			return "", "", "", err
+		}
+		outPutImages = append(outPutImages, outPutImage)
 	}
 
 	if len(outPutImages) > 1 {
 		gifPath, _ = createGif(outPutImages, "products", uniqueId, "product.gif")
 	}
-	log.Println("create")
-	return uniqueId, strings.TrimLeft(outPutImages[0], "."), gifPath
+	return uniqueId, strings.TrimLeft(outPutImages[0], "."), gifPath, nil
 }
 
 func createImageFromImages(
@@ -43,37 +46,41 @@ func createImageFromImages(
 	imagePaths []string,
 	outputPath string,
 	fileName string,
-	) string {
+	) (string, error) {
 	canvas := gg.NewContext(width, height)
 	for _, imagePath := range imagePaths {
 		f, err := os.Open(imagePath)
 		if err != nil {
-			log.Fatal(err)
+			redisClient.Notify("error", "Can't handle image by path: " + imagePath)
+			return "", err
 		}
 		defer func(f *os.File) {
 			err := f.Close()
 			if err != nil {
-				log.Fatal(err)
+				redisClient.Notify("error", "Can't close file connection by path: " + imagePath)
 			}
 		}(f)
 		image, _, err := image2.Decode(f)
 		if err != nil {
-			log.Fatal(err)
+			redisClient.Notify("error", "Can't decode image by path: " + imagePath)
+			return "", err
 		}
 		isExists, _ := exists(outputPath)
 		if isExists == false {
 			err := os.MkdirAll(outputPath, 0777)
 			if err != nil {
-				log.Fatal(err)
+				redisClient.Notify("error", "Can't create folder: " + outputPath)
+				return "", err
 			}
 		}
 		canvas.DrawImage(image, 0, 0)
 	}
 	err := canvas.SavePNG(outputPath + fileName)
 	if err != nil {
-		log.Fatal(err)
+		redisClient.Notify("error", "Can't save canvas image by path: " + outputPath + fileName)
+		return "", err
 	}
-	return outputPath + fileName
+	return outputPath + fileName, nil
 }
 
 func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (string, error) {
@@ -84,7 +91,7 @@ func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (st
 		pngImage, _ := png.Decode(f)
 		err := f.Close()
 		if err != nil {
-			log.Fatal(err)
+			redisClient.Notify("error", "Can't decode png image by path: " + imagePath)
 		}
 		bounds := pngImage.Bounds()
 		q := quantize.MedianCutQuantizer{}
@@ -99,7 +106,7 @@ func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (st
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			log.Fatal(err)
+			redisClient.Notify("error", "Can't close file connection")
 		}
 	}(f)
 	err := gif.EncodeAll(f, outGif)

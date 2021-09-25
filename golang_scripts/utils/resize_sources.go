@@ -2,13 +2,12 @@ package utils
 
 import (
 	"archive/zip"
-	"fmt"
 	"github.com/nfnt/resize"
 	"golang.org/x/text/encoding/charmap"
 	"image/png"
 	"io"
 	"io/ioutil"
-	"log"
+	redisClient "main.go/publisher"
 	"main.go/types"
 	"os"
 	"path/filepath"
@@ -16,19 +15,21 @@ import (
 	"strings"
 )
 
-func ResizeSources(unzipInfo types.UnzipInfo)  {
+func ResizeSources(unzipInfo types.UnzipInfo) error {
 	_ = os.RemoveAll("../assets")
 	_ = os.RemoveAll("../source_tiles")
 	_ = os.MkdirAll("../source_tiles", 0777)
 	err := Unzip("../source_tiles_archives/" + unzipInfo.Zip, "../source_tiles")
 
 	if err != nil {
-		log.Fatal(err)
+		redisClient.Notify("error", "Can't unzip archive")
+		return err
 	}
 
 	files, err := ioutil.ReadDir("../source_tiles")
 	if err != nil {
-		log.Fatal(err)
+		redisClient.Notify("error", "Can't read source tiles")
+		return err
 	}
 	var folders []string
 	var mainFolders []string
@@ -42,11 +43,14 @@ func ResizeSources(unzipInfo types.UnzipInfo)  {
 	for _, folder := range folders {
 		files, err := ioutil.ReadDir("../source_tiles/" + folder)
 		if err != nil {
-			log.Fatal(err)
+			redisClient.Notify("error", "Can't read dir by path: ../source_tiles/" + folder)
+			return err
 		}
 		for _, file := range files {
 			if file.IsDir() == true {
 				mainFolders = append(mainFolders, folder + "/" + file.Name())
+			} else {
+				foldersAndFiles = append(foldersAndFiles, folder + "/" + file.Name())
 			}
 		}
 	}
@@ -54,7 +58,8 @@ func ResizeSources(unzipInfo types.UnzipInfo)  {
 	for _, folder := range mainFolders {
 		files, err := ioutil.ReadDir("../source_tiles/" + folder)
 		if err != nil {
-			log.Fatal(err)
+			redisClient.Notify("error", "Can't read dir by path: ../source_tiles/" + folder)
+			return err
 		}
 		for _, file := range files {
 			if file.IsDir() == false {
@@ -67,11 +72,13 @@ func ResizeSources(unzipInfo types.UnzipInfo)  {
 		if strings.HasSuffix(path, ".png") == true {
 			file, err := os.Open(path)
 			if err != nil {
-				log.Fatal(err)
+				redisClient.Notify("error", "Can't open path: " + path)
+				return err
 			}
 			img, err := png.Decode(file)
 			if err != nil {
-				log.Fatal(err)
+				redisClient.Notify("error", "Can't decode file: " + path + "/" + file.Name())
+				return err
 			}
 			_ = file.Close()
 
@@ -81,17 +88,30 @@ func ResizeSources(unzipInfo types.UnzipInfo)  {
 			_ = os.MkdirAll(filepath.Dir("../assets/" + folder), 0777)
 			out, err := os.Create("../assets/" + folder)
 			if err != nil {
-				log.Fatal(err)
+				redisClient.Notify("error", "Can't create asset by path: ../assets/" + folder)
+				return err
 			}
 			defer func(out *os.File) {
 				err := out.Close()
 				if err != nil {
-					log.Fatal(err)
+					redisClient.Notify("error", "Can't create connection")
 				}
 			}(out)
 			_ = png.Encode(out, m)
 		}
+		if strings.HasSuffix(path, ".json") == true {
+			input, err := ioutil.ReadFile(path)
+			if err != nil {
+				redisClient.Notify("error", "Can't read file: " + path)
+			}
+			_ = os.MkdirAll(filepath.Dir("../assets/" + folder), 0777)
+			err = ioutil.WriteFile("../assets/" + folder, input, 0777)
+			if err != nil {
+				redisClient.Notify("error", "Can't create file: " + "../assets/" + folder)
+			}
+		}
 	}
+	return nil
 }
 
 func Unzip(src, dest string) error {
@@ -107,7 +127,8 @@ func Unzip(src, dest string) error {
 
 	err = os.MkdirAll(dest, 0777)
 	if err != nil {
-		log.Println(err)
+		redisClient.Notify("error", err.Error())
+		return err
 	}
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
@@ -134,18 +155,19 @@ func Unzip(src, dest string) error {
 
 		// Check for ZipSlip (Directory traversal)
 		if !strings.HasPrefix(path, filepath.Clean(dest) + string(os.PathSeparator)) {
-			return fmt.Errorf("illegal file path: %s", path)
+			redisClient.Notify("error", "illegal file path: " + path)
 		}
 
 		if f.FileInfo().IsDir() {
-			err := os.MkdirAll(path, f.Mode())
+			err := os.MkdirAll(path, 0777)
 			if err != nil {
-				log.Println(err)
+				redisClient.Notify("error", "Can't create directory: " + path)
+				return err
 			}
 		} else {
 			err := os.MkdirAll(filepath.Dir(path), f.Mode())
 			if err != nil {
-				log.Println(err)
+				redisClient.Notify("error", "Can't create directory: " + filepath.Dir(path))
 			}
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis/v8"
 	"log"
+	redisClient "main.go/publisher"
 	"main.go/types"
 	"main.go/utils"
 )
@@ -15,11 +16,15 @@ func OnResize(ctx context.Context, client *redis.Client)  {
 		for v := range ch {
 			var unzipInfo types.UnzipInfo
 			err := json.Unmarshal([]byte(v.Payload), &unzipInfo)
-			if (err != nil) {
-				log.Println(err)
+			if err != nil {
+				redisClient.Notify("error", "Can't decode unzip information")
 			}
-			utils.ResizeSources(unzipInfo)
-			client.Publish(ctx, "resize:end", "")
+			err = utils.ResizeSources(unzipInfo)
+			if err != nil {
+				log.Println(err)
+			} else {
+				client.Publish(ctx, "resize:end", "")
+			}
 		}
 	}(subscribe.Channel())
 }

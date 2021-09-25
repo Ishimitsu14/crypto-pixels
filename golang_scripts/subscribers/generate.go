@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis/v8"
 	"log"
+	redisClient "main.go/publisher"
 	"main.go/types"
 	"main.go/utils"
 	"strconv"
@@ -15,28 +16,31 @@ func OnGenerate(ctx context.Context, client *redis.Client)   {
 	subscribe := client.Subscribe(ctx, "generate:start")
 	go func(ch <-chan *redis.Message) {
 		for v := range ch {
-			var imagePaths []types.ImagePaths
-			err := json.Unmarshal([]byte(v.Payload), &imagePaths)
+			var generateData types.GenerateData
+			err := json.Unmarshal([]byte(v.Payload), &generateData)
 			if err != nil {
-				log.Println(err)
+				redisClient.Notify("error", "Generated is crashed")
 			}
-			countString, _ := client.Get(ctx, "count_generate_images").Result()
-			widthString, _ := client.Get(ctx, "width_generate_images").Result()
-			heightString, _ := client.Get(ctx, "height_generate_images").Result()
-			count, _ := strconv.ParseInt(countString, 0, 64)
+			widthString, _ := client.Get(ctx, "width_images").Result()
+			heightString, _ := client.Get(ctx, "height_images").Result()
 			width, _ := strconv.ParseInt(widthString, 0, 64)
 			height, _ := strconv.ParseInt(heightString, 0, 64)
-			products := generateAssetsLoop(int(count), imagePaths, int(width), int(height))
-			jsonProducts, err := json.Marshal(products)
+			products, err := generateAssetsLoop(int(generateData.Count), generateData.ImagePaths, int(width), int(height))
 			if err != nil {
 				log.Println(err)
+			} else {
+				jsonProducts, err := json.Marshal(products)
+				if err != nil {
+					redisClient.Notify("error", "Generated is crashed")
+				}
+				client.Publish(ctx, "generate:end", jsonProducts)
 			}
-			client.Publish(ctx, "generate:end", jsonProducts)
 		}
 	}(subscribe.Channel())
 }
 
-func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height int) []types.Product {
+func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height int) ([]types.Product, error) {
+	var err error = nil
 	var products []types.Product
 	var waitGroup sync.WaitGroup
 	goroutines := make(chan struct{}, 8)
@@ -45,18 +49,21 @@ func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height 
 		goroutines <- struct{}{}
 		waitGroup.Add(1)
 		go func(goroutines <-chan struct{}) {
-			uuid, imagePath, gifPath := utils.GenerateAssets(imagePaths[i], width, height)
-			products = append(products, types.Product{
-				Uuid: uuid,
-				Hash: imagePaths[i].Hash,
-				Attributes: imagePaths[i].Attributes,
-				ImagePath: imagePath,
-				GifPath: gifPath,
-			})
-			<-goroutines
-			waitGroup.Done()
+			uuid, imagePath, gifPath, err := utils.GenerateAssets(imagePaths[i], width, height)
+			if err == nil  {
+				products = append(products, types.Product{
+					Uuid: uuid,
+					Hash: imagePaths[i].Hash,
+					Attributes: imagePaths[i].Attributes,
+					Image: imagePath,
+					Gif: gifPath,
+					Stats: imagePaths[i].Stats,
+				})
+				<-goroutines
+				waitGroup.Done()
+			}
 		}(goroutines)
 	}
 	waitGroup.Wait()
-	return products
+	return products, err
 }

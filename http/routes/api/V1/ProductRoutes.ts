@@ -68,8 +68,6 @@ router.get('/metadata/:uuid', async (req: Request, res: Response) => {
 router.post('/generate', (req: Request, res: Response) => {
     const gifGeneratorService = new ProductGeneratorService(
         parseInt(req.body.countImages),
-        parseInt(req.body.width),
-        parseInt(req.body.height),
         req.body.isAttributes
     );
     gifGeneratorService.generate();

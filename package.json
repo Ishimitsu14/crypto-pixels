@@ -9,6 +9,7 @@
     "prod": "tsc --project ./"
   },
   "dependencies": {
+    "@pinata/sdk": "^1.1.23",
     "@types/app-root-path": "^1.2.4",
     "@types/axios": "^0.14.0",
     "@types/canvasjs": "^1.9.6",

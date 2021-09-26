@@ -5,10 +5,11 @@ import {IProductAttribute, IProductMetaData} from "../types/TProduct";
 export class Product extends BaseEntity {
 
     public static readonly statuses = {
-        NOT_SOLD: 1,
-        PENDING: 2,
-        GIVE_AWAY: 3,
-        SOLD: 4,
+        NOT_LOADED: 1,
+        UPLOADED_TO_IPFS: 2,
+        PENDING_SELL: 3,
+        GIVE_AWAY: 4,
+        SOLD: 5,
     }
 
     @PrimaryGeneratedColumn()
@@ -35,7 +36,7 @@ export class Product extends BaseEntity {
     @Column('simple-json', { nullable: true })
     stats: object
 
-    @Column({ default: () => Product.statuses.NOT_SOLD })
+    @Column({ default: () => Product.statuses.NOT_LOADED })
     status: number
 
     @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP'})

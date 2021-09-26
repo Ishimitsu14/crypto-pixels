@@ -21,14 +21,14 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.get('/buy', async (req: Request, res: Response) => {
     await connect()
-    let product = await Product.findOne({where: {status: Product.statuses.NOT_SOLD}})
+    let product = await Product.findOne({where: {status: Product.statuses.NOT_LOADED}})
     if (product) {
         const { count } = await getRepository(Product)
             .createQueryBuilder()
             .select('COUNT(id)', 'count')
             .where(
                 'status IN (:status)',
-                {status: [Product.statuses.SOLD, Product.statuses.PENDING]},
+                {status: [Product.statuses.SOLD, Product.statuses.PENDING_SELL, Product.statuses.UPLOADED_TO_IPFS]},
             )
             .getRawOne()
         const metaData: IProductMetaData = {
@@ -39,7 +39,7 @@ router.get('/buy', async (req: Request, res: Response) => {
             attributes: product.attributes,
         }
         product.setMetaData(metaData)
-        product.status = Product.statuses.PENDING
+        product.status = Product.statuses.PENDING_SELL
         product = await product.save()
         res.status(200).json({url: `${process.env.BASE_URL}/api/v1/product/metadata/${product.uuid}`})
     } else {

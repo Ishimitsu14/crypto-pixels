@@ -107,7 +107,7 @@ class ProductGeneratorService {
                 if (el.indexOf('.json') >= 0) {
                     info = JSON.parse(fs.readFileSync(`${appRoot.path}/assets/${folder}/${el}`, 'utf8'))
                 } else {
-                    subFolders.push(subFolder)
+                    subFolders.push(el)
                 }
             })
         const { subFolder, stats } = this.getSubFolderByChances(subFolders, info)
@@ -118,6 +118,7 @@ class ProductGeneratorService {
     }
 
     getSubFolderByChances(subFolders: string[], info?: IProductInfo[]): { subFolder: string; stats?: object } {
+        console.log(info, subFolders)
         if (info && info.length > 0) {
             let value = 0
             const randomInt = randomIntFromInterval(1, Rarities.Common)

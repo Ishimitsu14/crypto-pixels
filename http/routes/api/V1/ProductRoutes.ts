@@ -56,9 +56,7 @@ router.get('/stats', async (req: Request, res: Response) => {
         products.forEach((product) => {
             product.attributes.forEach((attribute) => {
                 const index = stats.findIndex((stat: { name: string; }) => stat.name == attribute.trait_type)
-                const rarity = rarities.find((r) => {
-                    return r.name.trim() === attribute.value.trim()
-                })
+                const rarity = rarities.find(r => r.name.trim() === attribute.value.trim())
                 if (index >= 0) {
                     const childrenIndex = stats[index]
                         .children
@@ -69,17 +67,49 @@ router.get('/stats', async (req: Request, res: Response) => {
                     if (childrenIndex >= 0) {
                         const splitName = stats[index].children[childrenIndex].name.split(':');
                         stats[index].children[childrenIndex].name = `${splitName[0]} : ${parseInt(splitName[1]) + 1}`
+                        const attributeValueIndex = stats[index]
+                            .children[childrenIndex]
+                            .children
+                            .findIndex((el: { name: string; }) => el.name.split(':')[0].trim() === attribute.value.trim())
+                        if (attributeValueIndex >= 0) {
+                            const splitName = stats[index]
+                                .children[childrenIndex]
+                                .children[attributeValueIndex]
+                                .name
+                                .split(':')
+                            stats[index]
+                                .children[childrenIndex]
+                                .children[attributeValueIndex]
+                                .name = `${splitName[0].trim()} : ${parseInt(splitName[1]) + 1}`
+                        } else {
+                            stats[index].children[childrenIndex].children.push({
+                                id: uuidv4(),
+                                name: `${attribute.value.trim()} : 1`
+                            })
+                        }
                     } else {
-                        // @ts-ignore
-                        stats[index].children.push({ id: uuidv4(), name: `${rarity.rarity} : 1` })
+                        stats[index].children.push({
+                            id: uuidv4(),
+                            // @ts-ignore
+                            name: `${rarity.rarity} : 1`,
+                            children: [
+                                { id: uuidv4(), name: `${attribute.value.trim()} : 1` }
+                            ]
+                        })
                     }
                 } else {
                     stats.push({
                         id: uuidv4(),
                         name: attribute.trait_type,
                         children: [
-                            // @ts-ignore
-                            { id: uuidv4(), name: `${rarity.rarity} : 1`}
+                            {
+                                id: uuidv4(),
+                                // @ts-ignore
+                                name: `${rarity.rarity} : 1`,
+                                children: [
+                                    { id: uuidv4(), name: `${attribute.value.trim()} : 1` }
+                                ]
+                            }
                         ],
                     })
                 }

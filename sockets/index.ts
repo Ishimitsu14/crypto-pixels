@@ -8,7 +8,6 @@ const cors = {
 }
 
 const getRoute = (http: Server, path: string): SocketServer => {
-    console.log(path)
     return new SocketServer(http, {
         cors,
         path: `/socket.io${path}`

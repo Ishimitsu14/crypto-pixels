@@ -16,7 +16,6 @@ export const connect = async () => {
 
 export const getAsyncRedis = (client: RedisClient, key: string): Promise<string | null> => {
     return new Promise<string | null>((resolve, reject) => {
-        console.log(key)
         client.get(key, (err, reply) => {
             if (err) {
                 reject(err);

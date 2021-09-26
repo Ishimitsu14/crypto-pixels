@@ -4,11 +4,12 @@ import appRoot from 'app-root-path';
 import {IGenerateProduct, IImageAttribute, IImagePaths} from "../types/TGenerateProduct";
 // @ts-ignore
 import pngFileStream from 'png-file-stream';
-import redis, {RedisClient} from "redis";
+import redis from "redis";
 import {createQueryBuilder} from "typeorm";
 import {Product} from "../models/Product";
 import NotificationService from "./NotificationService";
 import {IProductInfo, Rarities} from "../types/TProduct";
+import RarityService from "./RarityService";
 
 class ProductGeneratorService {
     private readonly countImages: number
@@ -34,7 +35,6 @@ class ProductGeneratorService {
                 imagePaths[i] = await this.getImagePaths()
                 i++
             }
-            console.log(imagePaths[0].attributes)
             client.publish(
                 `${this.channel}:start`,
                 JSON.stringify({ imagePaths, count: this.countImages }),
@@ -155,6 +155,7 @@ class ProductGeneratorService {
                         notificationService.types.SUCCESS,
                     )
                     subscriber.quit()
+                    new RarityService()
                 } catch (e: any) {
                     throw new Error(e.message)
                 }

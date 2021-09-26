@@ -7,6 +7,8 @@ import {connect} from "../../../../functions";
 import UploadService from "../../../../services/UploadService";
 import {IProductMetaData} from "../../../../types/TProduct";
 import {getRepository} from "typeorm";
+import { v4 as uuidv4 } from 'uuid';
+import RarityService from "../../../../services/RarityService";
 
 const express = require('express');
 const router = express.Router();
@@ -42,6 +44,51 @@ router.get('/buy', async (req: Request, res: Response) => {
         res.status(200).json({url: `${process.env.BASE_URL}/api/v1/product/metadata/${product.uuid}`})
     } else {
         res.status(404).json({error: {message: 'All products already sold'}})
+    }
+})
+
+router.get('/stats', async (req: Request, res: Response) => {
+    try {
+        const rarities = await RarityService.getRarity()
+        const stats: any = [];
+        await connect();
+        const products = await Product.find()
+        products.forEach((product) => {
+            product.attributes.forEach((attribute) => {
+                const index = stats.findIndex((stat: { name: string; }) => stat.name == attribute.trait_type)
+                const rarity = rarities.find((r) => {
+                    return r.name.trim() === attribute.value.trim()
+                })
+                if (index >= 0) {
+                    const childrenIndex = stats[index]
+                        .children
+                        .findIndex((stat: { name: string; }) => {
+                            // @ts-ignore
+                            return stat.name.split(':')[0].trim() == rarity.rarity
+                        })
+                    if (childrenIndex >= 0) {
+                        const splitName = stats[index].children[childrenIndex].name.split(':');
+                        stats[index].children[childrenIndex].name = `${splitName[0]} : ${parseInt(splitName[1]) + 1}`
+                    } else {
+                        // @ts-ignore
+                        stats[index].children.push({ id: uuidv4(), name: `${rarity.rarity} : 1` })
+                    }
+                } else {
+                    stats.push({
+                        id: uuidv4(),
+                        name: attribute.trait_type,
+                        children: [
+                            // @ts-ignore
+                            { id: uuidv4(), name: `${rarity.rarity} : 1`}
+                        ],
+                    })
+                }
+            })
+        })
+        res.status(200).json(stats)
+    } catch (e: any) {
+        console.log(e)
+        res.status(500).json({ error: { message: e.message} })
     }
 })
 

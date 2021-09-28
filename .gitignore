@@ -11,3 +11,5 @@ source_tiles
 meta_data
 ipfsData.json
 products
+nohup.*
+golang_scripts/main

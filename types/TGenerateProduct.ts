@@ -7,11 +7,11 @@ export type IGenerateProduct = {
     stats: object[]
 }
 
-export type IImagePaths = {
+export type IProductData = {
     paths: string[][];
     hash: string;
     attributes?: IImageAttribute[];
-    stats?: object[];
+    stats?: string[];
 }
 
 export type IImageAttribute = {

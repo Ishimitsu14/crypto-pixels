@@ -1,15 +1,14 @@
 import {connect, randomIntFromInterval} from "../functions";
 import fs, {stat} from 'fs';
 import appRoot from 'app-root-path';
-import {IGenerateProduct, IImageAttribute, IImagePaths} from "../types/TGenerateProduct";
+import {IGenerateProduct, IImageAttribute, IProductData} from "../types/TGenerateProduct";
 // @ts-ignore
 import pngFileStream from 'png-file-stream';
 import redis from "redis";
 import {createQueryBuilder} from "typeorm";
 import {Product} from "../models/Product";
 import NotificationService from "./NotificationService";
-import {IProductInfo, Rarities} from "../types/TProduct";
-import RarityService from "./RarityService";
+import {IProductInfo, IProductStat, Rarities} from "../types/TProduct";
 
 class ProductGeneratorService {
     private readonly countImages: number
@@ -29,15 +28,15 @@ class ProductGeneratorService {
             const client = redis.createClient()
             await connect();
             const iterations = new Array(this.countImages)
-            let imagePaths: IImagePaths[] = []
+            let productData: IProductData[] = []
             let i = 0
             for (let iteration of iterations) {
-                imagePaths[i] = await this.getImagePaths()
+                productData[i] = await this.getGenerateData()
                 i++
             }
             client.publish(
                 `${this.channel}:start`,
-                JSON.stringify({ imagePaths, count: this.countImages }),
+                JSON.stringify({ productData, count: this.countImages }),
                 () => client.quit()
             )
             this.onGenerateEnd()
@@ -52,12 +51,12 @@ class ProductGeneratorService {
         }
     }
 
-    async getImagePaths(): Promise<IImagePaths> {
+    async getGenerateData(): Promise<IProductData> {
         try {
             const paths: string[] = [];
             const images: string[][] = [];
             const attributes: IImageAttribute[] = [];
-            const stats: object[] = [];
+            const stats: { [key: string]: any[] }[] = [];
             const folders = fs.readdirSync(`${appRoot.path}/assets`);
             folders.sort((a: string, b: string) => {
                 const strA = a.split('-')
@@ -86,9 +85,14 @@ class ProductGeneratorService {
             }
             const [_, count] = await Product.findAndCount({ where: { hash } });
             if (count < 0) {
-                return this.getImagePaths()
+                return this.getGenerateData()
             }
-            return { hash, paths: images, attributes, stats }
+            return {
+                hash,
+                paths: images,
+                attributes,
+                stats: this.mergeStats(stats).map(stat => JSON.stringify(stat))
+            }
         } catch (e: any) {
             throw new Error(e.message)
         }
@@ -97,7 +101,7 @@ class ProductGeneratorService {
     getPathToSubFolder(folder: string): {
         path: string;
         attribute?: IImageAttribute;
-        stats?: object
+        stats?: { [key: string]: any }
     } {
         let info = undefined
         let attribute = undefined
@@ -118,13 +122,16 @@ class ProductGeneratorService {
     }
 
     getSubFolderByChances(subFolders: string[], info?: IProductInfo[]): { subFolder: string; stats?: object } {
-        console.log(info, subFolders)
         if (info && info.length > 0) {
             let value = 0
             const randomInt = randomIntFromInterval(1, Rarities.Common)
             // @ts-ignore
             const chancesArr = info.filter(el => Rarities[el.rarity] >= randomInt)
-            return { subFolder: chancesArr[randomIntFromInterval(0, chancesArr.length - 1)].name, stats: {} }
+            const chance = chancesArr[randomIntFromInterval(0, chancesArr.length - 1)]
+            return {
+                subFolder: chance.name,
+                stats: chance && chance.stats ? chance.stats : {}
+            }
         }
         return { subFolder: subFolders[randomIntFromInterval(0, subFolders.length - 1)], stats: {} }
     }
@@ -138,11 +145,47 @@ class ProductGeneratorService {
         return { trait_type: traitType, value: valuePath }
     }
 
+    mergeStats(stats: { [key: string]: any[] }[]) {
+        console.log(stats)
+        const mergedStats: IProductStat[] = []
+        stats.forEach((stat:{ [key: string]: any }, index) => {
+            const arrStat = Object.keys(stat)
+            arrStat.forEach((name: string) => {
+                let newValue = undefined
+                const value: string = stat[name]
+                const currentMark = value.slice(0, 1)
+                const index = mergedStats.findIndex(stat => stat.name === name)
+                if (index >= 0 && value.slice(-1) === '%') {
+                    let mark = '-'
+                    const mergedValue = mergedStats[index].value
+                    const mergedMark = mergedValue.slice(0, 1)
+                    if (mergedMark === '-' && currentMark === '-' ) mark = '-'
+                    if (mergedMark === '+' && currentMark === '+' ) mark = '+'
+                    if (mergedValue.slice(1, mergedValue.length - 1) >= value.slice(1, value.length - 1)) {
+                        newValue = eval(
+                            `${mergedValue.slice(1, mergedValue.length - 1)} ${mark} ${value.slice(1, value.length - 1)}`
+                        )
+                    } else {
+                        newValue = eval(
+                            `${value.slice(1, value.length - 1)} ${mark} ${mergedValue.slice(1, mergedValue.length - 1)}`
+                        )
+                    }
+                    newValue = newValue > 0 ? `+${newValue}%` : `-${newValue}%`
+                    mergedStats[index] = { name, value: newValue}
+                } else {
+                    mergedStats.push({ name, value })
+                }
+            })
+        })
+        return mergedStats
+    }
+
     onGenerateEnd() {
         const subscriber = redis.createClient()
         subscriber.on('message', async (channel: string, message: string) => {
             if (channel === `${this.channel}:end`) {
                 const generateProducts: IGenerateProduct[] = JSON.parse(message)
+                    .map((el: any) => ({ ...el, stats: el.stats.map((stat: string) => JSON.parse(stat)) }))
                 try {
                     await connect();
                     await createQueryBuilder()
@@ -156,7 +199,6 @@ class ProductGeneratorService {
                         notificationService.types.SUCCESS,
                     )
                     subscriber.quit()
-                    new RarityService()
                 } catch (e: any) {
                     throw new Error(e.message)
                 }

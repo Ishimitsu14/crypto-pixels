@@ -5,124 +5,51 @@ import {UploadedFile} from "express-fileupload";
 import {Product} from "../../../../models/Product";
 import {connect} from "../../../../functions";
 import UploadService from "../../../../services/UploadService";
-import {IProductMetaData} from "../../../../types/TProduct";
-import {getRepository} from "typeorm";
-import { v4 as uuidv4 } from 'uuid';
 import RarityService from "../../../../services/RarityService";
+import ProductPaginateService from "../../../../services/ProductPaginateService";
+import fs from "fs";
+import path from "path";
 
 const express = require('express');
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
-    await connect();
-    const products = await Product.find()
-    res.status(200).json(products);
+    try {
+        const productPaginateService = new ProductPaginateService(
+            {
+                page: parseInt(<string>req.query.page),
+                perPage: parseInt(<string>req.query.perPage),
+                sortBy: <string>req.query.sortBy,
+                sortDesc: parseInt(<string>req.query.sortDesc),
+            }
+        )
+        res.status(200).json(await productPaginateService.getProducts());
+    } catch (e: any) {
+        res.status(400).json({ error: { message: 'Bad request' } })
+    }
 });
 
-router.get('/buy', async (req: Request, res: Response) => {
-    await connect()
-    let product = await Product.findOne({where: {status: Product.statuses.NOT_LOADED}})
-    if (product) {
-        const { count } = await getRepository(Product)
-            .createQueryBuilder()
-            .select('COUNT(id)', 'count')
-            .where(
-                'status IN (:status)',
-                {status: [Product.statuses.SOLD, Product.statuses.PENDING_SELL, Product.statuses.UPLOADED_TO_IPFS]},
-            )
-            .getRawOne()
-        const metaData: IProductMetaData = {
-            name: `${process.env.PRODUCT_NAME} #${parseInt(count) + 1}`,
-            description: '',
-            external_url: '',
-            image: `${process.env.BASE_URL}/api/v1/product/${product.uuid}`,
-            attributes: product.attributes,
-        }
-        product.setMetaData(metaData)
-        product.status = Product.statuses.PENDING_SELL
-        product = await product.save()
-        res.status(200).json({url: `${process.env.BASE_URL}/api/v1/product/metadata/${product.uuid}`})
-    } else {
-        res.status(404).json({error: {message: 'All products already sold'}})
-    }
-})
-
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/rarity', async (req: Request, res: Response) => {
     try {
-        const rarities = await RarityService.getRarity()
-        const stats: any = [];
-        await connect();
-        const products = await Product.find()
-        products.forEach((product) => {
-            product.attributes.forEach((attribute) => {
-                const index = stats.findIndex((stat: { name: string; }) => stat.name == attribute.trait_type)
-                const rarity = rarities.find(r => r.name.trim() === attribute.value.trim())
-                if (index >= 0) {
-                    const childrenIndex = stats[index]
-                        .children
-                        .findIndex((stat: { name: string; }) => {
-                            // @ts-ignore
-                            return stat.name.split(':')[0].trim() == rarity.rarity
-                        })
-                    if (childrenIndex >= 0) {
-                        const splitName = stats[index].children[childrenIndex].name.split(':');
-                        stats[index].children[childrenIndex].name = `${splitName[0]} : ${parseInt(splitName[1]) + 1}`
-                        const attributeValueIndex = stats[index]
-                            .children[childrenIndex]
-                            .children
-                            .findIndex((el: { name: string; }) => el.name.split(':')[0].trim() === attribute.value.trim())
-                        if (attributeValueIndex >= 0) {
-                            const splitName = stats[index]
-                                .children[childrenIndex]
-                                .children[attributeValueIndex]
-                                .name
-                                .split(':')
-                            stats[index]
-                                .children[childrenIndex]
-                                .children[attributeValueIndex]
-                                .name = `${splitName[0].trim()} : ${parseInt(splitName[1]) + 1}`
-                        } else {
-                            stats[index].children[childrenIndex].children.push({
-                                id: uuidv4(),
-                                name: `${attribute.value.trim()} : 1`
-                            })
-                        }
-                    } else {
-                        stats[index].children.push({
-                            id: uuidv4(),
-                            // @ts-ignore
-                            name: `${rarity.rarity} : 1`,
-                            children: [
-                                { id: uuidv4(), name: `${attribute.value.trim()} : 1` }
-                            ]
-                        })
-                    }
-                } else {
-                    stats.push({
-                        id: uuidv4(),
-                        name: attribute.trait_type,
-                        children: [
-                            {
-                                id: uuidv4(),
-                                // @ts-ignore
-                                name: `${rarity.rarity} : 1`,
-                                children: [
-                                    { id: uuidv4(), name: `${attribute.value.trim()} : 1` }
-                                ]
-                            }
-                        ],
-                    })
-                }
-            })
-        })
+        const rarityService = new RarityService()
+        const stats = await rarityService.getRarities()
         res.status(200).json(stats)
     } catch (e: any) {
-        console.log(e)
         res.status(500).json({ error: { message: e.message} })
     }
 })
 
-router.get('/:uuid', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
+    await connect();
+    try {
+        const product = await Product.findOne({where: {id: req.params.id}})
+        res.status(200).json(product)
+    } catch (e: any) {
+        res.status(400).json({ error: { message: 'Bad request' } })
+    }
+});
+
+router.get('/image/:uuid', async (req: Request, res: Response) => {
     await connect();
     const product = await Product.findOne({where: {uuid: req.params.uuid}})
     try {
@@ -163,8 +90,9 @@ router.post('/upload-tiles', async (req: Request, res: Response) => {
     if (typeof width === 'string' && typeof height === 'string') {
         try {
             const uploadService = new UploadService(file, `${appRoot.path}/source_tiles_archives`)
-            const message = await uploadService.upload(width, height)
-            res.status(200).json({success: {message}})
+            await uploadService.upload()
+            uploadService.resizeArchive(width, height)
+            res.status(200).json({success: { message: 'Archive successfully uploaded await for notification' }})
         } catch (message: any) {
             res.status(500).json({error: {message: message}})
         }
@@ -173,5 +101,32 @@ router.post('/upload-tiles', async (req: Request, res: Response) => {
     }
 })
 
+router.post('/upload/:id', async (req: Request, res: Response) => {
+    const product = await Product.findOne(req.params.id)
+    // @ts-ignore
+    const file: UploadedFile = req.files.file;
+    if (!req.files || !product) {
+        return res.status(400).json({error: {message: 'No files were uploaded or product is not found.'}})
+    }
+    file.name = product?.image ? path.basename(product?.image) : file.name
+    const uploadService = new UploadService(file, `${appRoot.path}/products/${product.uuid}`)
+    await uploadService.upload()
+    res.status(200).json(product)
+})
+
+router.delete('/:id', async (req: Request, res: Response) => {
+    try {
+        const product = await Product.findOne(req.params.id)
+        if (product) {
+            fs.rmdirSync(`${appRoot}/products/${product.uuid}`, { recursive: true })
+            await product.remove()
+            res.status(200).json({ success: { message: 'Product is deleted' } })
+        } else {
+            throw new Error('Product is not found')
+        }
+    } catch (e: any) {
+        res.status(400).json({ error: { message: e.message } })
+    }
+})
 
 module.exports = router;

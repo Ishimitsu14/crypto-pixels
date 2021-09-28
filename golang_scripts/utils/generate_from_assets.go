@@ -16,53 +16,53 @@ import (
 	"strings"
 )
 
-func GenerateAssets(imagePaths types.ImagePaths, width, height int) (string, string, string, error) {
+func GenerateAssets(productData types.ProductData, width, height int) (string, string, string, error) {
 	uniqueId := uuid.NewString()
 	var gifPath string = ""
-	var outPutImages []string
-	for index, imagePath := range imagePaths.Paths {
+	var generatedPaths []string
+	for index, paths := range productData.Paths {
 		outPutImage, err := createImageFromImages(
 			width,
 			height,
-			imagePath,
+			paths,
 			"../products/" + uniqueId + "/",
 			strconv.Itoa(index + 1) + ".png",
 		)
 		if err != nil {
 			return "", "", "", err
 		}
-		outPutImages = append(outPutImages, outPutImage)
+		generatedPaths = append(generatedPaths, outPutImage)
 	}
 
-	if len(outPutImages) > 1 {
-		gifPath, _ = createGif(outPutImages, "products", uniqueId, "product.gif")
+	if len(generatedPaths) > 1 {
+		gifPath, _ = createGif(generatedPaths, "products", uniqueId, "product.gif")
 	}
-	return uniqueId, strings.TrimLeft(outPutImages[0], "."), gifPath, nil
+	return uniqueId, strings.TrimLeft(generatedPaths[0], "."), gifPath, nil
 }
 
 func createImageFromImages(
 	width int,
 	height int,
-	imagePaths []string,
+	paths []string,
 	outputPath string,
 	fileName string,
 	) (string, error) {
 	canvas := gg.NewContext(width, height)
-	for _, imagePath := range imagePaths {
-		f, err := os.Open(imagePath)
+	for _, path := range paths {
+		f, err := os.Open(path)
 		if err != nil {
-			redisClient.Notify("error", "Can't handle image by path: " + imagePath)
+			redisClient.Notify("error", "Can't handle image by path: " + path)
 			return "", err
 		}
 		defer func(f *os.File) {
 			err := f.Close()
 			if err != nil {
-				redisClient.Notify("error", "Can't close file connection by path: " + imagePath)
+				redisClient.Notify("error", "Can't close file connection by path: " + path)
 			}
 		}(f)
 		image, _, err := image2.Decode(f)
 		if err != nil {
-			redisClient.Notify("error", "Can't decode image by path: " + imagePath)
+			redisClient.Notify("error", "Can't decode image by path: " + path)
 			return "", err
 		}
 		isExists, _ := exists(outputPath)
@@ -83,15 +83,15 @@ func createImageFromImages(
 	return outputPath + fileName, nil
 }
 
-func createGif(imagePaths []string, outputFolder, uniqueId, fileName string) (string, error) {
+func createGif(generatedPaths []string, outputFolder, uniqueId, fileName string) (string, error) {
 	var outputPath = "../" + outputFolder + "/" + uniqueId + "/" + fileName
 	outGif := &gif.GIF{}
-	for _, imagePath := range imagePaths {
-		f, _ := os.Open(imagePath)
+	for _, generatedPath := range generatedPaths {
+		f, _ := os.Open(generatedPath)
 		pngImage, _ := png.Decode(f)
 		err := f.Close()
 		if err != nil {
-			redisClient.Notify("error", "Can't decode png image by path: " + imagePath)
+			redisClient.Notify("error", "Can't decode png image by path: " + generatedPath)
 		}
 		bounds := pngImage.Bounds()
 		q := quantize.MedianCutQuantizer{}

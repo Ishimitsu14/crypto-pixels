@@ -1,5 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, BaseEntity} from 'typeorm';
-import {IProductAttribute, IProductMetaData} from "../types/TProduct";
+import {IProductAttribute, IProductMetaData, IProductStat} from "../types/TProduct";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -34,7 +34,7 @@ export class Product extends BaseEntity {
     attributes: IProductAttribute[]
 
     @Column('simple-json', { nullable: true })
-    stats: object
+    stats: IProductStat[]
 
     @Column({ default: () => Product.statuses.NOT_LOADED })
     status: number

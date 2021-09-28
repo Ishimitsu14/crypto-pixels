@@ -4,6 +4,7 @@ import { Server } from 'http';
 import expressIp from 'express-ip';
 import cors from './middleware/cors'
 import fileUpload from 'express-fileupload'
+import basicAuth, {Authorizer} from 'express-basic-auth';
 
 
 module.exports = (app: Application, express: Express, http: Server, ws?: Server): void => {
@@ -11,14 +12,18 @@ module.exports = (app: Application, express: Express, http: Server, ws?: Server)
         require('./http')(app, express, http)
         require('./sockets')(http)
     }
-    const path = require('path');
     const bodyParser = require('body-parser')
     const cookieParser = require('cookie-parser');
+    app.use(cors);
+    app.use(basicAuth({
+        users: {
+            [process.env.USER_LOGIN || '']: process.env.USER_PASSWORD || ''
+        }
+    }))
     app.use(fileUpload({
         useTempFiles: true,
         tempFileDir: '/tmp/'
     }))
-    app.use(cors);
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
     app.use(cookieParser());

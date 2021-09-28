@@ -1,11 +1,11 @@
 package types
 
 type GenerateData struct {
-	ImagePaths []ImagePaths
+	ProductData []ProductData
 	Count uint
 }
 
-type ImagePaths struct {
+type ProductData struct {
 	Paths [][]string `json:"paths"`
 	Hash string `json:"hash"`
 	Attributes []ImageAttribute `json:"attributes"`

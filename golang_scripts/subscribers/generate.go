@@ -25,7 +25,7 @@ func OnGenerate(ctx context.Context, client *redis.Client)   {
 			heightString, _ := client.Get(ctx, "height_images").Result()
 			width, _ := strconv.ParseInt(widthString, 0, 64)
 			height, _ := strconv.ParseInt(heightString, 0, 64)
-			products, err := generateAssetsLoop(int(generateData.Count), generateData.ImagePaths, int(width), int(height))
+			products, err := generateAssetsLoop(int(generateData.Count), generateData.ProductData, int(width), int(height))
 			if err != nil {
 				log.Println(err)
 			} else {
@@ -39,25 +39,25 @@ func OnGenerate(ctx context.Context, client *redis.Client)   {
 	}(subscribe.Channel())
 }
 
-func generateAssetsLoop(count int, imagePaths []types.ImagePaths, width, height int) ([]types.Product, error) {
+func generateAssetsLoop(count int, ProductData []types.ProductData, width, height int) ([]types.Product, error) {
 	var err error = nil
 	var products []types.Product
 	var waitGroup sync.WaitGroup
-	goroutines := make(chan struct{}, 8)
+	goroutines := make(chan struct{}, 20)
 	for i := 0; i < count; i++ {
 		i := i
 		goroutines <- struct{}{}
 		waitGroup.Add(1)
 		go func(goroutines <-chan struct{}) {
-			uuid, imagePath, gifPath, err := utils.GenerateAssets(imagePaths[i], width, height)
+			uuid, imagePath, gifPath, err := utils.GenerateAssets(ProductData[i], width, height)
 			if err == nil  {
 				products = append(products, types.Product{
 					Uuid: uuid,
-					Hash: imagePaths[i].Hash,
-					Attributes: imagePaths[i].Attributes,
+					Hash: ProductData[i].Hash,
+					Attributes: ProductData[i].Attributes,
 					Image: imagePath,
 					Gif: gifPath,
-					Stats: imagePaths[i].Stats,
+					Stats: ProductData[i].Stats,
 				})
 				<-goroutines
 				waitGroup.Done()

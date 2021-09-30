@@ -57,7 +57,6 @@ func generateAssetsLoop(count int, ProductData []types.ProductData, width, heigh
 					Attributes: ProductData[i].Attributes,
 					Image: imagePath,
 					Gif: gifPath,
-					Stats: ProductData[i].Stats,
 				})
 				<-goroutines
 				waitGroup.Done()

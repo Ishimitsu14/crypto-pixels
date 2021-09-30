@@ -12,7 +12,7 @@ const apiSecret = process.env.PINATA_API_SECRET || ''
 const pinataProductCid = process.env.PINATA_PRODUCT_CID || ''
 const pinata = pinataSDK(apiKey, apiSecret);
 
-const uploadIpfs = async () => {
+const createMetaData = async () => {
     await connect()
     const products = await Product.find()
     for (const index in products) {
@@ -34,9 +34,9 @@ const uploadIpfs = async () => {
 (async function () {
     try {
         fs.mkdirSync(`${appRoot.path}/meta_data`)
-        await uploadIpfs()
+        await createMetaData()
         const response = await pinata.pinFromFS(metaDataDir)
-        fs.rmSync(`${appRoot}/ipfsData.json`, { recursive: true })
+        // fs.rmSync(`${appRoot}/ipfsData.json`, { recursive: true })
         fs.appendFileSync(`${appRoot}/ipfsData.json`, JSON.stringify(response))
         process.exit()
     } catch (e: any) {

@@ -1,5 +1,5 @@
 import {connect, randomIntFromInterval} from "../functions";
-import fs, {stat} from 'fs';
+import fs from 'fs';
 import appRoot from 'app-root-path';
 import {IGenerateProduct, IImageAttribute, IProductData} from "../types/TGenerateProduct";
 // @ts-ignore
@@ -56,7 +56,6 @@ class ProductGeneratorService {
             const paths: string[] = [];
             const images: string[][] = [];
             const attributes: IImageAttribute[] = [];
-            const stats: { [key: string]: any[] }[] = [];
             const folders = fs.readdirSync(`${appRoot.path}/assets`);
             folders.sort((a: string, b: string) => {
                 const strA = a.split('-')
@@ -67,9 +66,6 @@ class ProductGeneratorService {
                 const data = this.getPathToSubFolder(folder)
                 if (data.attribute) {
                     attributes.push(data.attribute)
-                }
-                if (data.stats && Object.keys(data.stats).length > 0) {
-                    stats.push(data.stats)
                 }
                 paths.push(data.path);
             }
@@ -91,7 +87,6 @@ class ProductGeneratorService {
                 hash,
                 paths: images,
                 attributes,
-                stats: this.mergeStats(stats).map(stat => JSON.stringify(stat))
             }
         } catch (e: any) {
             throw new Error(e.message)
@@ -101,7 +96,6 @@ class ProductGeneratorService {
     getPathToSubFolder(folder: string): {
         path: string;
         attribute?: IImageAttribute;
-        stats?: { [key: string]: any }
     } {
         let info = undefined
         let attribute = undefined
@@ -114,14 +108,14 @@ class ProductGeneratorService {
                     subFolders.push(el)
                 }
             })
-        const { subFolder, stats } = this.getSubFolderByChances(subFolders, info)
+        const { subFolder } = this.getSubFolderByChances(subFolders, info)
         if (this.isAttributes) {
             attribute = this.getAttributeByPath(folder, subFolder)
         }
-        return { path: `${appRoot.path}/assets/${folder}/${subFolder}`, attribute, stats }
+        return { path: `${appRoot.path}/assets/${folder}/${subFolder}`, attribute }
     }
 
-    getSubFolderByChances(subFolders: string[], info?: IProductInfo[]): { subFolder: string; stats?: object } {
+    getSubFolderByChances(subFolders: string[], info?: IProductInfo[]): { subFolder: string; } {
         if (info && info.length > 0) {
             let value = 0
             const randomInt = randomIntFromInterval(1, Rarities.Common)
@@ -130,10 +124,9 @@ class ProductGeneratorService {
             const chance = chancesArr[randomIntFromInterval(0, chancesArr.length - 1)]
             return {
                 subFolder: chance.name,
-                stats: chance && chance.stats ? chance.stats : {}
             }
         }
-        return { subFolder: subFolders[randomIntFromInterval(0, subFolders.length - 1)], stats: {} }
+        return { subFolder: subFolders[randomIntFromInterval(0, subFolders.length - 1)] }
     }
 
     getAttributeByPath(traitTypePath: string, valuePath: string): IImageAttribute {
@@ -145,15 +138,14 @@ class ProductGeneratorService {
         return { trait_type: traitType, value: valuePath }
     }
 
-    mergeStats(stats: { [key: string]: any[] }[]) {
-        console.log(stats)
+    static mergeStats(stats: { [key: string]: any }[]) {
         const mergedStats: IProductStat[] = []
         stats.forEach((stat:{ [key: string]: any }, index) => {
             const arrStat = Object.keys(stat)
             arrStat.forEach((name: string) => {
                 let newValue = undefined
                 const value: string = stat[name]
-                const currentMark = value.slice(0, 1)
+                const currentMark = value.slice(0, 1) === '-' ? '-' : '+'
                 const index = mergedStats.findIndex(stat => stat.name === name)
                 if (index >= 0 && value.slice(-1) === '%') {
                     let mark = '-'
@@ -185,7 +177,6 @@ class ProductGeneratorService {
         subscriber.on('message', async (channel: string, message: string) => {
             if (channel === `${this.channel}:end`) {
                 const generateProducts: IGenerateProduct[] = JSON.parse(message)
-                    .map((el: any) => ({ ...el, stats: el.stats.map((stat: string) => JSON.parse(stat)) }))
                 try {
                     await connect();
                     await createQueryBuilder()

@@ -9,7 +9,6 @@ type ProductData struct {
 	Paths [][]string `json:"paths"`
 	Hash string `json:"hash"`
 	Attributes []ImageAttribute `json:"attributes"`
-	Stats []string `json:"stats"`
 }
 
 type Product struct {
@@ -18,7 +17,6 @@ type Product struct {
 	Attributes []ImageAttribute `json:"attributes"`
 	Image string `json:"image"`
 	Gif string `json:"gif"`
-	Stats []string `json:"stats"`
 }
 
 type OutputImage struct {

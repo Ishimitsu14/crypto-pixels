@@ -43,7 +43,7 @@ func generateAssetsLoop(count int, ProductData []types.ProductData, width, heigh
 	var err error = nil
 	var products []types.Product
 	var waitGroup sync.WaitGroup
-	goroutines := make(chan struct{}, 20)
+	goroutines := make(chan struct{}, 8)
 	for i := 0; i < count; i++ {
 		i := i
 		goroutines <- struct{}{}

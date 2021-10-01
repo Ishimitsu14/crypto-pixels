@@ -7,9 +7,8 @@
     "start": "node build/bin/http.js NODE_ENV=production",
     "watch": "nodemon bin/http.ts",
     "prod": "tsc --project ./",
-    "uploadIpfs": "ts-node commands/IPFSUpload.ts",
-    "cleanIpfs": "ts-node commands/IPFSClean.ts",
-    "productCleanDif": "ts-node commands/ProductCleanDif.ts"
+    "watch-discord": "nodemon ./bots/discord/app.ts",
+    "start-discord": "node build/bots/discord/app.js NODE_ENV=production"
   },
   "dependencies": {
     "@pinata/ipfs-gateway-tools": "^1.1.6",
@@ -28,12 +27,14 @@
     "@types/uuid": "^8.3.0",
     "adm-zip": "^0.5.5",
     "app-root-path": "^3.0.0",
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "canvas": "^2.7.0",
     "cookie-parser": "1.4.5",
     "core-js": "^3.6.5",
     "debug": "2.6.9",
+    "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
     "express": "4.17.1",
     "express-basic-auth": "^1.2.0",
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@types/adm-zip": "^0.4.34",
     "@types/express-fileupload": "^1.1.7",
+    "@types/ws": "^8.2.0",
     "concurrently": "^5.2.0",
     "cross-env": "7.0.2",
     "nodemon": "^2.0.4",

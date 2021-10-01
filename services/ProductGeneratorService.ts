@@ -8,7 +8,8 @@ import redis from "redis";
 import {createQueryBuilder} from "typeorm";
 import {Product} from "../models/Product";
 import NotificationService from "./NotificationService";
-import {IProductInfo, IProductStat, Rarities} from "../types/TProduct";
+import {IProductInfo, IProductStat} from "../types/TProduct";
+import { Rarities } from "../types/TRarities";
 
 class ProductGeneratorService {
     private readonly countImages: number

@@ -9,7 +9,7 @@ import {v4 as uuidv4} from "uuid";
 
 class RarityService {
     private readonly key: string = 'rarity';
-    private rarities: { name: string, rarity: string }[];
+    public rarities: { name: string, rarity: string }[];
 
     constructor() {
        try {

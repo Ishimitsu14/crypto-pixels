@@ -11,7 +11,7 @@ module.exports = (app: Application, express: Express, http: Server, ws?: Server)
     const init = () => {
         require('./http')(app, express, http)
         require('./sockets')(http)
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env.SERVER_TYPE === 'prod') {
             require('./jobs')()
         }
     }

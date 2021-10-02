@@ -50,62 +50,64 @@ class RarityService {
                 product.attributes.forEach((attribute) => {
                     const index = stats.findIndex((stat: { name: string; }) => stat.name == attribute.trait_type)
                     const rarity = this.rarities.find(r => r.name.trim() === attribute.value.trim())
-                    if (index >= 0) {
-                        const childrenIndex = stats[index]
-                            .children
-                            .findIndex((stat: { name: string; }) => {
-                                // @ts-ignore
-                                return stat.name.split(':')[0].trim() == rarity.rarity
-                            })
-                        if (childrenIndex >= 0) {
-                            const splitName = stats[index].children[childrenIndex].name.split(':');
-                            stats[index].children[childrenIndex].name = `${splitName[0]} : ${parseInt(splitName[1]) + 1}`
-                            const attributeValueIndex = stats[index]
-                                .children[childrenIndex]
+                    if (rarity) {
+                        if (index >= 0) {
+                            const childrenIndex = stats[index]
                                 .children
-                                .findIndex((el: { name: string; }) => el.name.split(':')[0].trim() === attribute.value.trim())
-                            if (attributeValueIndex >= 0) {
-                                const splitName = stats[index]
-                                    .children[childrenIndex]
-                                    .children[attributeValueIndex]
-                                    .name
-                                    .split(':')
-                                stats[index]
-                                    .children[childrenIndex]
-                                    .children[attributeValueIndex]
-                                    .name = `${splitName[0].trim()} : ${parseInt(splitName[1]) + 1}`
-                            } else {
-                                stats[index].children[childrenIndex].children.push({
-                                    id: uuidv4(),
-                                    name: `${attribute.value.trim()} : 1`,
-                                    children: []
+                                .findIndex((stat: { name: string; }) => {
+                                    // @ts-ignore
+                                    return stat.name.split(':')[0].trim() == rarity.rarity
                                 })
-                            }
-                        } else {
-                            stats[index].children.push({
-                                id: uuidv4(),
-                                // @ts-ignore
-                                name: `${rarity.rarity} : 1`,
-                                children: [
-                                    { id: uuidv4(), name: `${attribute.value.trim()} : 1`, children: [] }
-                                ]
-                            })
-                        }
-                    } else {
-                        stats.push({
-                            id: uuidv4(),
-                            name: attribute.trait_type,
-                            children: [
-                                {
+                            if (childrenIndex >= 0) {
+                                const splitName = stats[index].children[childrenIndex].name.split(':');
+                                stats[index].children[childrenIndex].name = `${splitName[0]} : ${parseInt(splitName[1]) + 1}`
+                                const attributeValueIndex = stats[index]
+                                    .children[childrenIndex]
+                                    .children
+                                    .findIndex((el: { name: string; }) => el.name.split(':')[0].trim() === attribute.value.trim())
+                                if (attributeValueIndex >= 0) {
+                                    const splitName = stats[index]
+                                        .children[childrenIndex]
+                                        .children[attributeValueIndex]
+                                        .name
+                                        .split(':')
+                                    stats[index]
+                                        .children[childrenIndex]
+                                        .children[attributeValueIndex]
+                                        .name = `${splitName[0].trim()} : ${parseInt(splitName[1]) + 1}`
+                                } else {
+                                    stats[index].children[childrenIndex].children.push({
+                                        id: uuidv4(),
+                                        name: `${attribute.value.trim()} : 1`,
+                                        children: []
+                                    })
+                                }
+                            } else {
+                                stats[index].children.push({
                                     id: uuidv4(),
                                     // @ts-ignore
                                     name: `${rarity.rarity} : 1`,
                                     children: [
                                         { id: uuidv4(), name: `${attribute.value.trim()} : 1`, children: [] }
                                     ]
-                                }
-                            ],
-                        })
+                                })
+                            }
+                        } else {
+                            stats.push({
+                                id: uuidv4(),
+                                name: attribute.trait_type,
+                                children: [
+                                    {
+                                        id: uuidv4(),
+                                        // @ts-ignore
+                                        name: `${rarity.rarity} : 1`,
+                                        children: [
+                                            { id: uuidv4(), name: `${attribute.value.trim()} : 1`, children: [] }
+                                        ]
+                                    }
+                                ],
+                            })
+                        }
                     }
                 })
             })

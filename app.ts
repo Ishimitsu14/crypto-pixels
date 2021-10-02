@@ -11,7 +11,9 @@ module.exports = (app: Application, express: Express, http: Server, ws?: Server)
     const init = () => {
         require('./http')(app, express, http)
         require('./sockets')(http)
-        require('./jobs')()
+        if (process.env.NODE_ENV === 'production') {
+            require('./jobs')()
+        }
     }
     const bodyParser = require('body-parser')
     const cookieParser = require('cookie-parser');

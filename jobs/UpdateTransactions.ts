@@ -3,12 +3,14 @@ import {Transaction} from "../models/Transaction";
 import {getRepository} from "typeorm";
 import {connect} from "../functions";
 import {Product} from "../models/Product";
+import redis from "redis";
 
 export = async () => {
     const etherScanApi = new EtherScanApi()
     setInterval(async () => {
         try {
             await connect()
+            const client = redis.createClient()
             const {result} = await etherScanApi.getTransactions(1)
             result.forEach((result) => {
                 Transaction.findAndCount({where: {hash: result.hash}})
@@ -31,6 +33,9 @@ export = async () => {
                                             .then(() => {
                                                 product.status = Product.statuses.SOLD
                                                 product.save()
+                                                    .then(() => {
+                                                        client.publish('unicorn:sold', JSON.stringify(product.id))
+                                                    })
                                                     .catch((e: any) => console.log(e))
                                             })
                                             .catch((e: any) => console.log(e))

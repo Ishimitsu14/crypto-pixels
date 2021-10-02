@@ -8,7 +8,9 @@
     "watch": "nodemon bin/http.ts",
     "prod": "tsc --project ./",
     "watch-discord": "nodemon ./bots/discord/app.ts",
-    "start-discord": "node build/bots/discord/app.js NODE_ENV=production"
+    "start-discord": "node build/bots/discord/app.js NODE_ENV=production",
+    "watch-telegram": "nodemon ./bots/telegram/app.ts",
+    "start-telegram": "node build/bots/telegram/app.js NODE_ENV=production"
   },
   "dependencies": {
     "@pinata/ipfs-gateway-tools": "^1.1.6",
@@ -21,6 +23,7 @@
     "@types/gifencoder": "^2.0.0",
     "@types/node": "^14.11.1",
     "@types/node-cron": "^2.0.3",
+    "@types/node-telegram-bot-api": "^0.53.0",
     "@types/redis": "^2.8.28",
     "@types/sharp": "^0.27.1",
     "@types/shelljs": "^0.8.8",
@@ -53,6 +56,7 @@
     "mysql": "^2.18.1",
     "node-cron": "^2.0.3",
     "node-go-require": "^2.0.0",
+    "node-telegram-bot-api": "^0.54.0",
     "pg": "^8.3.3",
     "pg-hstore": "^2.3.3",
     "png-file-stream": "^1.2.1",

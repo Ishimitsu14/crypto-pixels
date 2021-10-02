@@ -70,7 +70,7 @@ class ProductGeneratorService {
                 }
                 paths.push(data.path);
             }
-            const hash = paths.join('')
+            const hash = paths.map((path) => path.substr(path.indexOf('/assets'), path.length - 1)).join('')
             for (const path of paths) {
                 const files = fs.readdirSync(path)
                 files.forEach((item, index) => {

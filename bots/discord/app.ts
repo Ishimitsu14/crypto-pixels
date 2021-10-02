@@ -44,7 +44,19 @@ import RarityService from "../../services/RarityService";
                     for (const attribute of product.attributes) {
                         const rarity = rarityService.rarities.find((x) => x.name === attribute.value)
                         if (rarity) {
-                            const rarityWithColor = "```arm" + '\n' +
+                            let rarityPrefix = ''
+                            switch (rarity.rarity) {
+                                case 'Common':
+                                    rarityPrefix = ''
+                                    break
+                                case 'Uncommon':
+                                    rarityPrefix = 'yml'
+                                    break
+                                default:
+                                    rarityPrefix = 'arm'
+                                    break
+                            }
+                            const rarityWithColor = "```" + rarityPrefix + '\n' +
                                 rarity.rarity +
                                 '```'
                             attributes.push({

@@ -146,24 +146,11 @@ class ProductGeneratorService {
             arrStat.forEach((name: string) => {
                 let newValue = undefined
                 const value: string = stat[name]
-                const currentMark = value.slice(0, 1) === '-' ? '-' : '+'
                 const index = mergedStats.findIndex(stat => stat.name === name)
                 if (index >= 0 && value.slice(-1) === '%') {
-                    let mark = '-'
                     const mergedValue = mergedStats[index].value
-                    const mergedMark = mergedValue.slice(0, 1)
-                    if (mergedMark === '-' && currentMark === '-' ) mark = '-'
-                    if (mergedMark === '+' && currentMark === '+' ) mark = '+'
-                    if (mergedValue.slice(1, mergedValue.length - 1) >= value.slice(1, value.length - 1)) {
-                        newValue = eval(
-                            `${mergedValue.slice(1, mergedValue.length - 1)} ${mark} ${value.slice(1, value.length - 1)}`
-                        )
-                    } else {
-                        newValue = eval(
-                            `${value.slice(1, value.length - 1)} ${mark} ${mergedValue.slice(1, mergedValue.length - 1)}`
-                        )
-                    }
-                    newValue = newValue > 0 ? `+${newValue}%` : `-${newValue}%`
+                    const evalCalculated = `${mergedValue.slice(0, mergedValue.length - 1)} + ${value.slice(0, value.length - 1)}`
+                    newValue = eval(evalCalculated) > 0 ? `+${eval(evalCalculated)}%` : `${eval(evalCalculated)}%`
                     mergedStats[index] = { name, value: newValue}
                 } else {
                     mergedStats.push({ name, value })

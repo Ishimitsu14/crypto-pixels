@@ -118,6 +118,17 @@ class RarityService {
         }
     }
 
+    public getRaritiesByProduct(product: Product) {
+        const rarities: { trait_type: string; value: string; rarity: string }[] = []
+        for (const attribute of product.attributes) {
+            const rarity = this.rarities.find((x) => x.name === attribute.value)
+            if (rarity) {
+                rarities.push({ trait_type: attribute.trait_type, value:attribute.value, rarity: rarity.rarity })
+            }
+        }
+        return rarities
+    }
+
     async catchError(e: any) {
         const subscriber = redis.createClient()
         const notificationService = new NotificationService()

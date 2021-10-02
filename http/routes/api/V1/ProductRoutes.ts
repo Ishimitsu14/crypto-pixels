@@ -39,6 +39,22 @@ router.get('/rarity', async (req: Request, res: Response) => {
     }
 })
 
+router.get('/rarity/:id', async (req: Request, res: Response) => {
+    try {
+        await connect()
+        const product = await Product.findOne(req.params.id)
+        if (product) {
+            const rarityService = new RarityService()
+            const rarity = rarityService.getRaritiesByProduct(product)
+            res.status(200).json(rarity)
+        } else {
+            res.status(400).json({ error: { message: 'Bad request' } })
+        }
+    } catch (e: any) {
+        res.status(500).json({ error: { message: e.message} })
+    }
+})
+
 router.get('/:id', async (req: Request, res: Response) => {
     await connect();
     try {

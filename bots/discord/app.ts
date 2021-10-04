@@ -20,7 +20,7 @@ const specsCommand = async (message: string, response: Discord.Message) => {
                 { statuses: [Product.statuses.SOLD, Product.statuses.GIVE_AWAY] }
             )
             .where({ id: parseInt(message) })
-            .getRawOne()
+            .getOne()
         if (product) {
             const embed = {
                 color: '#ff0000',
@@ -51,14 +51,13 @@ const specsCommand = async (message: string, response: Discord.Message) => {
 
 const checkCommand = async (message: string, response: Discord.Message, rarityService: RarityService) => {
     if (message && !Number.isNaN(parseInt(message))) {
-        const product = await Product.findOne(
-            {
-                where: {
-                    id: parseInt(message),
-                    status: Product.statuses.SOLD
-                }
-            }
-        )
+        const product = await Product.createQueryBuilder()
+            .where(
+                "product.status IN (:...statuses)",
+                { statuses: [Product.statuses.SOLD, Product.statuses.GIVE_AWAY] }
+            )
+            .where({ id: parseInt(message) })
+            .getOne()
         if (product) {
             const attributes: { name: string; value: string; inline: boolean }[] = []
             const rarities = rarityService.getRaritiesByProduct(product)
@@ -152,6 +151,7 @@ const checkCommand = async (message: string, response: Discord.Message, raritySe
                     try {
                         await specsCommand(message, response)
                     } catch (e: any) {
+                        console.log(e)
                         await errorCommand(response)
                     }
                     break

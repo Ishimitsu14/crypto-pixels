@@ -1,5 +1,5 @@
 import  axios, {AxiosInstance} from 'axios'
-import {IERC721List} from "../types/TEtherscan";
+import {IERC721List, Transaction} from "../types/TEtherscan";
 
 class EtherScanApi {
 
@@ -16,7 +16,7 @@ class EtherScanApi {
         this.contractAddress = process.env.ETHER_SCAN_CONTRACT || ''
     }
 
-    async getTransactions(page: number): Promise<IERC721List> {
+    async getTokenTransactions(page: number): Promise<IERC721List> {
         try {
             const response = await this.axios.get('/', {
                 params: {
@@ -34,6 +34,20 @@ class EtherScanApi {
         }
     }
 
+    async getTransactionByHash(hash: string): Promise<Transaction> {
+        try {
+            const response = await this.axios.get('/', {
+                params: {
+                    module: 'proxy',
+                    action: 'eth_getTransactionByHash',
+                    txhash: hash,
+                }
+            })
+            return response.data
+        } catch (e: any) {
+            throw Error(e.message)
+        }
+    }
 }
 
 export = EtherScanApi

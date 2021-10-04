@@ -28,6 +28,9 @@ export class Transaction extends BaseEntity {
     gas: string
 
     @Column()
+    method: string
+
+    @Column()
     gasPrice: string
 
     @Column()

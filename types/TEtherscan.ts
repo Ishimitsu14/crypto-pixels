@@ -1,3 +1,38 @@
+export type TransactionData = {
+    accessList: [],
+    blockHash: string,
+    chainId: string,
+    condition: string | null,
+    creates: string | null,
+    blockNumber: string,
+    timeStamp: string,
+    from: string,
+    to: string,
+    contractAddress : string,
+    input: string,
+    type: string,
+    gas: string,
+    gasUsed: string,
+    gasPrice: string,
+    maxFeePerGas: string,
+    maxPriorityFeePerGas: string,
+    nonce: string,
+    publicKey: string,
+    r: string,
+    raw: string,
+    s: string,
+    transactionIndex: string,
+    v: string,
+    value: string,
+    hash: string,
+}
+
+export type Transaction = {
+    id: string
+    jsonrpc: string
+    result: TransactionData
+}
+
 export type IERC721 = {
     blockNumber: string
     timeStamp: string

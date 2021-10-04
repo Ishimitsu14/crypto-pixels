@@ -14,14 +14,13 @@ const errorCommand = async (response: Discord.Message) => {
 
 const specsCommand = async (message: string, response: Discord.Message) => {
     if (message && !Number.isNaN(parseInt(message))) {
-        const product = await Product.findOne(
-            {
-                where: {
-                    id: parseInt(message),
-                    status: Product.statuses.SOLD
-                }
-            }
-        )
+        const product = await Product.createQueryBuilder()
+            .where(
+                "product.status IN (:...statuses)",
+                { statuses: [Product.statuses.SOLD, Product.statuses.GIVE_AWAY] }
+            )
+            .where({ id: parseInt(message) })
+            .getRawOne()
         if (product) {
             const embed = {
                 color: '#ff0000',

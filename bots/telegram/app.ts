@@ -29,13 +29,14 @@ import {connect} from "../../functions";
         subscriber.on('message', async (channel: string, message) => {
             if (channel === 'unicorn:sold') {
                 const product = await Product.findOne(parseInt(message))
-                if (product) {
+                if (product && (product.status === Product.statuses.SOLD || product.status === Product.statuses.GIVE_AWAY)) {
+                    const status = product.status === Product.statuses.SOLD ? 'sold' : 'given away'
                     const chatIds: number[] = JSON.parse(fs.readFileSync(chatIdsPath, 'utf8'))
                     chatIds.forEach((chatId) => {
                         bot.sendPhoto(
                             chatId,
                             `https://ipfs.io/ipfs/${process.env.PINATA_PRODUCT_CID}/${product.uuid}/1.png`,
-                            { caption: `Unicorn #${product.id} sold!!` }
+                            { caption: `Unicorn #${product.id} ${status}!!` }
                         )
                     })
                 }
